@@ -3,4 +3,7 @@ Work In Progress
 
 If the debug option in visual studio does not work, try this:  
 Project Properties->Configuration Properties->Debugging->Working Directory  
-The working directory must be set to `$(OutputPath)`
+The working directory must be set to `$(OutputPath)`  
+
+Change glCreate to glGen
+https://github.com/TheCherno/Hazel/issues/67
