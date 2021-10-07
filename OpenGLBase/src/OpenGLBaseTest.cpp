@@ -1,5 +1,4 @@
 #include "../OpenGLApp.h"
-#include "vmath.h"
 
 GLuint compile_shaders(void)
 {
@@ -156,25 +155,25 @@ public:
 
 		glUseProgram(rendering_program);
 
-		vmath::mat4 mv_matrix;
+		glm::mat4 mv_matrix = glm::mat4(1.0f);
 		float f;
 
 		float aspect = (float)info.width / (float)info.height;
-		vmath::mat4 proj_matrix = vmath::perspective(50.0f, aspect, 0.1f, 1000.0f);
-		glUniformMatrix4fv(proj_location, 1, GL_FALSE, proj_matrix);
+		glm::mat4 proj_matrix = glm::perspective(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
+		glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
 
 		f = (float)currentTime * 0.1f;
 		mv_matrix =
-			vmath::translate(0.0f, 0.0f, -4.0f) *
-			vmath::translate
-			(sinf(2.1f * f) * 0.5f,
+			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)) *
+			glm::translate(glm::mat4(1.0f), glm::vec3(
+				sinf(2.1f * f) * 0.5f,
 				cosf(1.7f * f) * 0.5f,
-				sinf(1.3f * f) * cosf(1.5f * f) * 2.0f
+				sinf(1.3f * f) * cosf(1.5f * f) * 2.0f)
 			) *
-			vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
-			vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
+			glm::rotate(glm::mat4(1.0f), (float)currentTime * 5.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), (float)currentTime * 1.0f, glm::vec3(1.0f, 0.0f, 0.0f));
 
-		glUniformMatrix4fv(mv_location, 1, GL_FALSE, mv_matrix);
+		glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	}
