@@ -1,4 +1,5 @@
 #include "../OpenGLApp.h"
+#include "vmath.h"
 
 GLuint compile_shaders(void)
 {
@@ -53,6 +54,12 @@ GLuint compile_shaders(void)
 
 class my_app : public OpenGLBase::OpenGLApp
 {
+	GLuint rendering_program;
+	GLuint vao;
+	GLuint buffer;
+	GLint mv_location;
+	GLint proj_location;
+
 public:
 
 	void init()
@@ -64,57 +71,120 @@ public:
 
 	void startup()
 	{
-		shaderProgram = compile_shaders();
-		
-		float vertices[] = {
-			 0.5f,  0.5f, 0.0f,  // top right
-			 0.5f, -0.5f, 0.0f,  // bottom right
-			-0.5f, -0.5f, 0.0f,  // bottom left
-			-0.5f,  0.5f, 0.0f   // top left 
+		rendering_program = compile_shaders();
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(1, &buffer);
+
+		static const GLfloat vertex_positions[] =
+		{
+			//z
+			0.25f, 0.25f, -0.25f,
+			0.25f, -0.25f, -0.25f,
+			-0.25f, 0.25f, -0.25f,
+
+			0.25f, -0.25f, -0.25f,
+			-0.25f, 0.25f, -0.25f,
+			-0.25f, -0.25f, -0.25f,
+
+			0.25f, 0.25f, 0.25f,
+			0.25f, -0.25f, 0.25f,
+			-0.25f, 0.25f, 0.25f,
+
+			0.25f, -0.25f, 0.25f,
+			-0.25f, 0.25f, 0.25f,
+			-0.25f, -0.25f, 0.25f,
+			//z
+
+			//x
+			0.25f, 0.25f, 0.25f,
+			0.25f, 0.25f, -0.25f,
+			0.25f, -0.25f, 0.25f,
+
+			0.25f, 0.25f, -0.25f,
+			0.25f, -0.25f, 0.25f,
+			0.25f, -0.25f, -0.25f,
+
+			-0.25f, 0.25f, 0.25f,
+			-0.25f, 0.25f, -0.25f,
+			-0.25f, -0.25f, 0.25f,
+
+			-0.25f, 0.25f, -0.25f,
+			-0.25f, -0.25f, 0.25f,
+			-0.25f, -0.25f, -0.25f,
+			//x
+
+			//y
+			0.25f, 0.25f, 0.25f,
+			0.25f, 0.25f, -0.25f,
+			-0.25f, 0.25f, 0.25f,
+
+			0.25f, 0.25f, -0.25f,
+			-0.25f, 0.25f, 0.25f,
+			-0.25f, 0.25f, -0.25f,
+
+			0.25f, -0.25f, 0.25f,
+			0.25f, -0.25f, -0.25f,
+			-0.25f, -0.25f, 0.25f,
+
+			0.25f, -0.25f, -0.25f,
+			-0.25f, -0.25f, 0.25f,
+			-0.25f, -0.25f, -0.25f
+			//y		
 		};
-		unsigned int indices[] = {  // note that we start from 0!
-			0, 1, 3,  // first Triangle
-			1, 2, 3   // second Triangle
-		};
 
-		glGenVertexArrays(1, &VAO);
-		glGenBuffers(1, &VBO);
-		glGenBuffers(1, &EBO);
-		glBindVertexArray(VAO);
 
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		mv_location = glGetUniformLocation(rendering_program, "mv_matrix");
+		proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
+		glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 		glEnableVertexAttribArray(0);
 	}
 
 	void render(double currentTime)
 	{
-		GLfloat color[] = { 0.2f, 0.3f, 0.3f, 1.0f };
+
+		GLfloat color[] = { 0.0f, 0.25f, 0.0f, 1.0f };
 		glClearBufferfv(GL_COLOR, 0, color);
 
 		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
-		glUseProgram(shaderProgram);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glUseProgram(rendering_program);
+
+		vmath::mat4 mv_matrix;
+		float f;
+
+		float aspect = (float)info.width / (float)info.height;
+		vmath::mat4 proj_matrix = vmath::perspective(50.0f, aspect, 0.1f, 1000.0f);
+		glUniformMatrix4fv(proj_location, 1, GL_FALSE, proj_matrix);
+
+		f = (float)currentTime * 0.1f;
+		mv_matrix =
+			vmath::translate(0.0f, 0.0f, -4.0f) *
+			vmath::translate
+			(sinf(2.1f * f) * 0.5f,
+				cosf(1.7f * f) * 0.5f,
+				sinf(1.3f * f) * cosf(1.5f * f) * 2.0f
+			) *
+			vmath::rotate((float)currentTime * 45.0f, 0.0f, 1.0f, 0.0f) *
+			vmath::rotate((float)currentTime * 81.0f, 1.0f, 0.0f, 0.0f);
+
+		glUniformMatrix4fv(mv_location, 1, GL_FALSE, mv_matrix);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
 	}
 
 	void shutdown()
 	{
-		glDeleteVertexArrays(1, &VAO);
-		glDeleteBuffers(1, &VBO);
-		glDeleteBuffers(1, &EBO);
-		glDeleteProgram(shaderProgram);
+		glDeleteVertexArrays(1, &vao);
+		glDeleteBuffers(1, &buffer);
+		glDeleteProgram(rendering_program);
 	}
-
-	unsigned int shaderProgram = 0;
-	unsigned int VBO = 0, VAO = 0, EBO = 0;
 
 };
 

@@ -23,14 +23,18 @@ namespace OpenGLBase
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 		window = glfwCreateWindow(info.width, info.height, info.title.c_str(), NULL, NULL);
+		
 		if (window == NULL)
 		{
 			std::cout << "Failed to create GLFW window" << std::endl;
 			glfwTerminate();
 			return;
 		}
+
 		glfwMakeContextCurrent(window);
-		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+		gladLoadGL();
+
+		//glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 		// glad: load all OpenGL function pointers
 		// ---------------------------------------
