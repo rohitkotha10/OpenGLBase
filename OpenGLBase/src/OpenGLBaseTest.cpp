@@ -78,83 +78,46 @@ public:
 
 		static const GLfloat vertex_positions[] =
 		{
-			-0.5f, -0.5f, 0.0f,
-			0.5f, -0.5f, 0.0f,
-			0.5f, 0.5f, 0.0f,
-			-0.5f, 0.5f, 0.0f
+			//z
+			-0.25f, -0.25f, -0.25f,
+			0.25f, -0.25f, -0.25f,
+			0.25f, 0.25f, -0.25f,
+			-0.25f, 0.25f, -0.25f,
+			0.25f, -0.25f, 0.25f,
+			0.25f, 0.25f, 0.25f,
+			-0.25f, 0.25f, 0.25f,
+			-0.25f, -0.25f, 0.25f,
 		};
 
 		static const int indices[] =
 		{
 			0, 1, 2,
-			2, 3, 0.
-
+			2, 3, 0,
+			1, 2, 4,
+			2, 4, 5,
+			5, 7, 4,
+			5, 7, 6,
+			6, 3, 7,
+			3, 7, 0,
+			0, 1, 7,
+			7, 1, 4,
+			6, 2, 5,
+			2, 6, 3
 		};
-			//{
-			//	//z
-			//	-0.25f, -0.25f, -0.25f,
-			//	0.25f, -0.25f, -0.25f,
-			//	0.25f, 0.25f, -0.25f,
-			//	-0.25f, 0.25f, -0.25f,
-
-			//	0.25f, 0.25f, 0.25f,
-			//	0.25f, -0.25f, 0.25f,
-			//	-0.25f, 0.25f, 0.25f,
-
-			//	0.25f, -0.25f, 0.25f,
-			//	-0.25f, 0.25f, 0.25f,
-			//	-0.25f, -0.25f, 0.25f,
-			//	//z
-
-			//	//x
-			//	0.25f, 0.25f, 0.25f,
-			//	0.25f, 0.25f, -0.25f,
-			//	0.25f, -0.25f, 0.25f,
-
-			//	0.25f, 0.25f, -0.25f,
-			//	0.25f, -0.25f, 0.25f,
-			//	0.25f, -0.25f, -0.25f,
-
-			//	-0.25f, 0.25f, 0.25f,
-			//	-0.25f, 0.25f, -0.25f,
-			//	-0.25f, -0.25f, 0.25f,
-
-			//	-0.25f, 0.25f, -0.25f,
-			//	-0.25f, -0.25f, 0.25f,
-			//	-0.25f, -0.25f, -0.25f,
-			//	//x
-
-			//	//y
-			//	0.25f, 0.25f, 0.25f,
-			//	0.25f, 0.25f, -0.25f,
-			//	-0.25f, 0.25f, 0.25f,
-
-			//	0.25f, 0.25f, -0.25f,
-			//	-0.25f, 0.25f, 0.25f,
-			//	-0.25f, 0.25f, -0.25f,
-
-			//	0.25f, -0.25f, 0.25f,
-			//	0.25f, -0.25f, -0.25f,
-			//	-0.25f, -0.25f, 0.25f,
-
-			//	0.25f, -0.25f, -0.25f,
-			//	-0.25f, -0.25f, 0.25f,
-			//	-0.25f, -0.25f, -0.25f
-			//	//y		
-			//};
 
 
-		//mv_location = glGetUniformLocation(rendering_program, "mv_matrix");
-		//proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
+
+		mv_location = glGetUniformLocation(rendering_program, "mv_matrix");
+		proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
 
 		glBindBuffer(GL_ARRAY_BUFFER, buffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 		glEnableVertexAttribArray(0);
 
-		static unsigned int *indibuffer = new unsigned int[2];
-		glGenBuffers(1, indibuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *indibuffer);
+		static unsigned int indibuffer;
+		glGenBuffers(1, &indibuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indibuffer);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	}
 
@@ -164,32 +127,32 @@ public:
 		GLfloat color[] = { 0.0f, 0.25f, 0.0f, 1.0f };
 		glClearBufferfv(GL_COLOR, 0, color);
 
-		//glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0);
-		//glEnable(GL_DEPTH_TEST);
-		//glDepthFunc(GL_LEQUAL);
+		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 
 		glUseProgram(rendering_program);
 
-		//glm::mat4 mv_matrix = glm::mat4(1.0f);
-		//float f;
+		glm::mat4 mv_matrix = glm::mat4(1.0f);
+		float f;
 
-		//float aspect = (float)info.width / (float)info.height;
-		//glm::mat4 proj_matrix = glm::perspective(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
-		//glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
+		float aspect = (float)info.width / (float)info.height;
+		glm::mat4 proj_matrix = glm::perspective(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
+		glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
 
-		//f = (float)currentTime;
-		//mv_matrix =
-		//	glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
-		//	glm::translate(glm::mat4(1.0f), glm::vec3(
-		//		sinf(f) * 1.0f,
-		//		cosf(f) * 1.0f,
-		//		sinf(f) * cosf(f) * 5.0f)
-		//	) *
-		//	glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-		//	glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		f = (float)currentTime;
+		mv_matrix =
+			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
+			glm::translate(glm::mat4(1.0f), glm::vec3(
+				sinf(f) * 1.0f,
+				cosf(f) * 1.0f,
+				sinf(f) * cosf(f) * 5.0f)
+			) *
+			glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
 
-		//glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
 	}
 
