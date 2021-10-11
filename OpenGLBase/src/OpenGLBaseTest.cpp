@@ -26,7 +26,7 @@ GLuint compile_shaders(void)
 	}
 
 	fs = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fs, 1, fs_source, NULL); //copy code
+	glShaderSource(fs, 1, fs_source, NULL);
 	glCompileShader(fs);
 	glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
 	if (!success)
@@ -78,69 +78,84 @@ public:
 
 		static const GLfloat vertex_positions[] =
 		{
-			//z
-			0.25f, 0.25f, -0.25f,
-			0.25f, -0.25f, -0.25f,
-			-0.25f, 0.25f, -0.25f,
-
-			0.25f, -0.25f, -0.25f,
-			-0.25f, 0.25f, -0.25f,
-			-0.25f, -0.25f, -0.25f,
-
-			0.25f, 0.25f, 0.25f,
-			0.25f, -0.25f, 0.25f,
-			-0.25f, 0.25f, 0.25f,
-
-			0.25f, -0.25f, 0.25f,
-			-0.25f, 0.25f, 0.25f,
-			-0.25f, -0.25f, 0.25f,
-			//z
-
-			//x
-			0.25f, 0.25f, 0.25f,
-			0.25f, 0.25f, -0.25f,
-			0.25f, -0.25f, 0.25f,
-
-			0.25f, 0.25f, -0.25f,
-			0.25f, -0.25f, 0.25f,
-			0.25f, -0.25f, -0.25f,
-
-			-0.25f, 0.25f, 0.25f,
-			-0.25f, 0.25f, -0.25f,
-			-0.25f, -0.25f, 0.25f,
-
-			-0.25f, 0.25f, -0.25f,
-			-0.25f, -0.25f, 0.25f,
-			-0.25f, -0.25f, -0.25f,
-			//x
-
-			//y
-			0.25f, 0.25f, 0.25f,
-			0.25f, 0.25f, -0.25f,
-			-0.25f, 0.25f, 0.25f,
-
-			0.25f, 0.25f, -0.25f,
-			-0.25f, 0.25f, 0.25f,
-			-0.25f, 0.25f, -0.25f,
-
-			0.25f, -0.25f, 0.25f,
-			0.25f, -0.25f, -0.25f,
-			-0.25f, -0.25f, 0.25f,
-
-			0.25f, -0.25f, -0.25f,
-			-0.25f, -0.25f, 0.25f,
-			-0.25f, -0.25f, -0.25f
-			//y		
+			-0.5f, -0.5f, 0.0f,
+			0.5f, -0.5f, 0.0f,
+			0.5f, 0.5f, 0.0f,
+			-0.5f, 0.5f, 0.0f
 		};
 
+		static const int indices[] =
+		{
+			0, 1, 2,
+			2, 3, 0.
 
-		mv_location = glGetUniformLocation(rendering_program, "mv_matrix");
-		proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
+		};
+			//{
+			//	//z
+			//	-0.25f, -0.25f, -0.25f,
+			//	0.25f, -0.25f, -0.25f,
+			//	0.25f, 0.25f, -0.25f,
+			//	-0.25f, 0.25f, -0.25f,
+
+			//	0.25f, 0.25f, 0.25f,
+			//	0.25f, -0.25f, 0.25f,
+			//	-0.25f, 0.25f, 0.25f,
+
+			//	0.25f, -0.25f, 0.25f,
+			//	-0.25f, 0.25f, 0.25f,
+			//	-0.25f, -0.25f, 0.25f,
+			//	//z
+
+			//	//x
+			//	0.25f, 0.25f, 0.25f,
+			//	0.25f, 0.25f, -0.25f,
+			//	0.25f, -0.25f, 0.25f,
+
+			//	0.25f, 0.25f, -0.25f,
+			//	0.25f, -0.25f, 0.25f,
+			//	0.25f, -0.25f, -0.25f,
+
+			//	-0.25f, 0.25f, 0.25f,
+			//	-0.25f, 0.25f, -0.25f,
+			//	-0.25f, -0.25f, 0.25f,
+
+			//	-0.25f, 0.25f, -0.25f,
+			//	-0.25f, -0.25f, 0.25f,
+			//	-0.25f, -0.25f, -0.25f,
+			//	//x
+
+			//	//y
+			//	0.25f, 0.25f, 0.25f,
+			//	0.25f, 0.25f, -0.25f,
+			//	-0.25f, 0.25f, 0.25f,
+
+			//	0.25f, 0.25f, -0.25f,
+			//	-0.25f, 0.25f, 0.25f,
+			//	-0.25f, 0.25f, -0.25f,
+
+			//	0.25f, -0.25f, 0.25f,
+			//	0.25f, -0.25f, -0.25f,
+			//	-0.25f, -0.25f, 0.25f,
+
+			//	0.25f, -0.25f, -0.25f,
+			//	-0.25f, -0.25f, 0.25f,
+			//	-0.25f, -0.25f, -0.25f
+			//	//y		
+			//};
+
+
+		//mv_location = glGetUniformLocation(rendering_program, "mv_matrix");
+		//proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
 
 		glBindBuffer(GL_ARRAY_BUFFER, buffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 		glEnableVertexAttribArray(0);
+
+		static unsigned int *indibuffer = new unsigned int[2];
+		glGenBuffers(1, indibuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *indibuffer);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	}
 
 	void render(double currentTime)
@@ -149,32 +164,32 @@ public:
 		GLfloat color[] = { 0.0f, 0.25f, 0.0f, 1.0f };
 		glClearBufferfv(GL_COLOR, 0, color);
 
-		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0);
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
+		//glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0);
+		//glEnable(GL_DEPTH_TEST);
+		//glDepthFunc(GL_LEQUAL);
 
 		glUseProgram(rendering_program);
 
-		glm::mat4 mv_matrix = glm::mat4(1.0f);
-		float f;
+		//glm::mat4 mv_matrix = glm::mat4(1.0f);
+		//float f;
 
-		float aspect = (float)info.width / (float)info.height;
-		glm::mat4 proj_matrix = glm::perspective(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
-		glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
+		//float aspect = (float)info.width / (float)info.height;
+		//glm::mat4 proj_matrix = glm::perspective(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
+		//glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
 
-		f = (float)currentTime * 0.1f;
-		mv_matrix =
-			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -4.0f)) *
-			glm::translate(glm::mat4(1.0f), glm::vec3(
-				sinf(2.1f * f) * 0.5f,
-				cosf(1.7f * f) * 0.5f,
-				sinf(1.3f * f) * cosf(1.5f * f) * 2.0f)
-			) *
-			glm::rotate(glm::mat4(1.0f), (float)currentTime * 5.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), (float)currentTime * 1.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		//f = (float)currentTime;
+		//mv_matrix =
+		//	glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
+		//	glm::translate(glm::mat4(1.0f), glm::vec3(
+		//		sinf(f) * 1.0f,
+		//		cosf(f) * 1.0f,
+		//		sinf(f) * cosf(f) * 5.0f)
+		//	) *
+		//	glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+		//	glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
 
-		glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		//glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 	}
 

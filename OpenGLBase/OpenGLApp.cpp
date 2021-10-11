@@ -32,15 +32,15 @@ namespace OpenGLBase
 		}
 
 		glfwMakeContextCurrent(window);
-		gladLoadGL();
+		glewInit();
 
 		//glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 		// glad: load all OpenGL function pointers
 		// ---------------------------------------
-		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+		if (glewInit() != GLEW_OK)
 		{
-			std::cout << "Failed to initialize GLAD" << std::endl;
+			std::cout << "Failed to initialize GLEW" << std::endl;
 			return;
 		}
 
