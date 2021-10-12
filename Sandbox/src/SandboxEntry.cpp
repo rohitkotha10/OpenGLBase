@@ -1,4 +1,4 @@
-#include "../OpenGLApp.h"
+#include "OpenGLBase.h"
 
 GLuint compile_shaders(void)
 {
@@ -6,10 +6,10 @@ GLuint compile_shaders(void)
 	GLuint fs;
 	GLuint program;
 
-	std::string vs_string = parse("res/shaders/vs.shader");
+	std::string vs_string = parse("../../../Sandbox/res/shaders/vs.shader");
 	static const GLchar* vs_source[] = { vs_string.c_str() };
 
-	std::string fs_string = parse("res/shaders/fs.shader");
+	std::string fs_string = parse("../../../Sandbox/res/shaders/fs.shader");
 	static const GLchar* fs_source[] = { fs_string.c_str() };
 
 	vs = glCreateShader(GL_VERTEX_SHADER);
@@ -65,7 +65,7 @@ public:
 	{
 		info.width = 800;
 		info.height = 600;
-		info.title = "Hello";
+		info.title = "Textures";
 	}
 
 	void startup()
@@ -146,7 +146,7 @@ public:
 			glm::translate(glm::mat4(1.0f), glm::vec3(
 				sinf(f) * 1.0f,
 				cosf(f) * 1.0f,
-				sinf(f) * cosf(f) * 5.0f)
+				sinf(f) * cosf(f) * 2.0f)
 			) *
 			glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
 			glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));

@@ -1,4 +1,4 @@
-#include "OpenGLApp.h"
+#include "Application.h"
 
 namespace OpenGLBase
 {
@@ -70,10 +70,6 @@ namespace OpenGLBase
 
 std::string parse(std::string shadertype)
 {
-	std::string rootpath = "../../../OpenGLBase/";
-	rootpath += shadertype;
-	shadertype = rootpath;
-
 	std::ifstream ifs(shadertype);
 
 	std::string final;

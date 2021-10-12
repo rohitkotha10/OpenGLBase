@@ -15,22 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="vendor\glad.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vendor\stb_image.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <None Include="res\shaders\vs.shader" />
+    <None Include="res\shaders\fs.shader" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Application.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGLBase.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="src\SandboxEntry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
