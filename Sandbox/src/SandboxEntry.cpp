@@ -1,4 +1,5 @@
-#include "OpenGLBase.h"
+#include "OpenGLBase.h";
+#include "stb_image.h";
 
 GLuint compile_shaders(void)
 {
@@ -55,16 +56,15 @@ class my_app : public OpenGLBase::OpenGLApp
 {
 	GLuint rendering_program;
 	GLuint vao;
-	GLuint buffer;
-	GLint mv_location;
-	GLint proj_location;
+	GLuint texture1;
+	GLuint texture2;
 
 public:
 
 	void init()
 	{
-		info.width = 800;
-		info.height = 600;
+		info.width = 1000;
+		info.height = 1000;
 		info.title = "Textures";
 	}
 
@@ -74,51 +74,95 @@ public:
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 
-		glGenBuffers(1, &buffer);
-
-		static const GLfloat vertex_positions[] =
+		static const float vertex_positions[] =
 		{
 			//z
-			-0.25f, -0.25f, -0.25f,
-			0.25f, -0.25f, -0.25f,
-			0.25f, 0.25f, -0.25f,
-			-0.25f, 0.25f, -0.25f,
-			0.25f, -0.25f, 0.25f,
-			0.25f, 0.25f, 0.25f,
-			-0.25f, 0.25f, 0.25f,
-			-0.25f, -0.25f, 0.25f,
+			-0.5f, -0.5f, 0.0f,
+			0.5f, -0.5f, 0.0f,
+			0.5f, 0.5f, 0.0f,
+			-0.5f, 0.5f, 0.0f
 		};
 
 		static const int indices[] =
 		{
 			0, 1, 2,
-			2, 3, 0,
-			1, 2, 4,
-			2, 4, 5,
-			5, 7, 4,
-			5, 7, 6,
-			6, 3, 7,
-			3, 7, 0,
-			0, 1, 7,
-			7, 1, 4,
-			6, 2, 5,
-			2, 6, 3
+			2, 3, 0
 		};
 
+		static const float texCoords[] =
+		{
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+			0.0f, 1.0f
 
+		};
 
-		mv_location = glGetUniformLocation(rendering_program, "mv_matrix");
-		proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
-
+		GLuint buffer;
+		glGenBuffers(1, &buffer);
 		glBindBuffer(GL_ARRAY_BUFFER, buffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(0);
 
-		static unsigned int indibuffer;
+		GLuint indibuffer;
 		glGenBuffers(1, &indibuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indibuffer);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray(0);
+
+		GLuint texbuffer;
+		glGenBuffers(1, &texbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, texbuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray(1);
+
+		stbi_set_flip_vertically_on_load(true);
+
+		glGenTextures(1, &texture1);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		int width, height, nrChannels;
+		static unsigned char* data = stbi_load("../../../Sandbox/res/media/wall.jpg", &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+		else
+		{
+			std::cout << "Fail Texture Load" << std::endl;
+		}
+
+		glGenTextures(1, &texture2);
+		glBindTexture(GL_TEXTURE_2D, texture2);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		data = stbi_load("../../../Sandbox/res/media/smile.jpg", &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+		else
+		{
+			std::cout << "Fail Texture Load" << std::endl;
+		}
+
+		
+		stbi_image_free(data);
+
 	}
 
 	void render(double currentTime)
@@ -127,39 +171,24 @@ public:
 		GLfloat color[] = { 0.0f, 0.25f, 0.0f, 1.0f };
 		glClearBufferfv(GL_COLOR, 0, color);
 
-		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0);
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
-
 		glUseProgram(rendering_program);
 
-		glm::mat4 mv_matrix = glm::mat4(1.0f);
-		float f;
+		glUniform1i(glGetUniformLocation(rendering_program, "myTex1"), 0);
+		glUniform1i(glGetUniformLocation(rendering_program, "myTex2"), 1);
 
-		float aspect = (float)info.width / (float)info.height;
-		glm::mat4 proj_matrix = glm::perspective(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
-		glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2);
 
-		f = (float)currentTime;
-		mv_matrix =
-			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
-			glm::translate(glm::mat4(1.0f), glm::vec3(
-				sinf(f) * 1.0f,
-				cosf(f) * 1.0f,
-				sinf(f) * cosf(f) * 2.0f)
-			) *
-			glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
 
-		glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 	}
 
 	void shutdown()
 	{
 		glDeleteVertexArrays(1, &vao);
-		glDeleteBuffers(1, &buffer);
 		glDeleteProgram(rendering_program);
 	}
 

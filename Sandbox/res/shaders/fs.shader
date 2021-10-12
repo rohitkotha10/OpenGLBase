@@ -2,12 +2,12 @@
 
 out vec4 color;
 
-in VS_OUT
-{
-	vec4 color;
-} fs_in;
+in vec2 TexCrd;
+
+uniform sampler2D myTex1;
+uniform sampler2D myTex2;
 
 void main(void)
 {
-	color = fs_in.color;
+	color = mix(texture(myTex1, TexCrd), texture(myTex2, TexCrd), 0.2);
 }
