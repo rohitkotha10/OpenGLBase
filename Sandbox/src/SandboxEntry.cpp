@@ -56,6 +56,9 @@ class my_app : public OpenGLBase::OpenGLApp
 {
 	GLuint rendering_program;
 	GLuint vao;
+	GLuint buffer;
+	GLuint indibuffer;
+	GLuint texbuffer;
 	GLuint texture1;
 	GLuint texture2;
 
@@ -98,12 +101,10 @@ public:
 
 		};
 
-		GLuint buffer;
 		glGenBuffers(1, &buffer);
 		glBindBuffer(GL_ARRAY_BUFFER, buffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
 
-		GLuint indibuffer;
 		glGenBuffers(1, &indibuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indibuffer);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -111,7 +112,6 @@ public:
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 		glEnableVertexAttribArray(0);
 
-		GLuint texbuffer;
 		glGenBuffers(1, &texbuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, texbuffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
@@ -171,10 +171,18 @@ public:
 		GLfloat color[] = { 0.0f, 0.25f, 0.0f, 1.0f };
 		glClearBufferfv(GL_COLOR, 0, color);
 
+		glm::mat4 trans = glm::mat4(1.0f);
+		trans = glm::rotate(trans, (float)currentTime, glm::vec3(0.0f, 0.0f, 1.0f));
+
+
 		glUseProgram(rendering_program);
 
 		glUniform1i(glGetUniformLocation(rendering_program, "myTex1"), 0);
 		glUniform1i(glGetUniformLocation(rendering_program, "myTex2"), 1);
+
+		unsigned int transformLoc = glGetUniformLocation(rendering_program, "transMat");
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
@@ -190,6 +198,11 @@ public:
 	{
 		glDeleteVertexArrays(1, &vao);
 		glDeleteProgram(rendering_program);
+		glDeleteBuffers(1, &buffer);
+		glDeleteBuffers(1, &indibuffer);
+		glDeleteBuffers(1, &texbuffer); 
+		glDeleteTextures(1, &texture1);
+		glDeleteTextures(1, &texture2);
 	}
 
 };
