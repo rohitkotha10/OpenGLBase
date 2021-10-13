@@ -1,5 +1,4 @@
 #include "OpenGLBase.h";
-#include "stb_image.h";
 
 GLuint compile_shaders(void)
 {
@@ -56,18 +55,19 @@ class my_app : public OpenGLBase::OpenGLApp
 {
 	GLuint rendering_program;
 	GLuint vao;
-	GLuint buffer;
-	GLuint indibuffer;
-	GLuint texbuffer;
+
+	GLuint vertBuffer;
+	GLuint indBuffer;
+	GLuint texBuffer;
+
 	GLuint texture1;
 	GLuint texture2;
 
 public:
-
 	void init()
 	{
-		info.width = 1000;
-		info.height = 1000;
+		info.width = 800;
+		info.height = 600;
 		info.title = "Textures";
 	}
 
@@ -77,19 +77,59 @@ public:
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 
-		static const float vertex_positions[] =
+		static const GLfloat vertex_positions[] =
 		{
 			//z
-			-0.5f, -0.5f, 0.0f,
-			0.5f, -0.5f, 0.0f,
-			0.5f, 0.5f, 0.0f,
-			-0.5f, 0.5f, 0.0f
+			-0.25f, -0.25f, -0.25f,//0
+			0.25f, -0.25f, -0.25f,//1
+			0.25f, 0.25f, -0.25f,//2
+			-0.25f, 0.25f, -0.25f,//3
+
+			0.25f, -0.25f, -0.25f,//1
+			0.25f, -0.25f, 0.25f,//4
+			0.25f, 0.25f, 0.25f,//5
+			0.25f, 0.25f, -0.25f,//2
+
+			-0.25f, -0.25f, 0.25f,//7
+			-0.25f, -0.25f, -0.25f,//0
+			-0.25f, 0.25f, -0.25f,//3
+			-0.25f, 0.25f, 0.25f,//6
+
+			0.25f, -0.25f, 0.25f,//4
+			-0.25f, -0.25f, 0.25f,//7
+			-0.25f, 0.25f, 0.25f,//6
+			0.25f, 0.25f, 0.25f,//5
+
+			-0.25f, 0.25f, -0.25f,//3
+			0.25f, 0.25f, -0.25f,//2
+			0.25f, 0.25f, 0.25f,//5
+			-0.25f, 0.25f, 0.25f,//6
+
+			-0.25f, -0.25f, -0.25f,//0
+			0.25f, -0.25f, -0.25f,//1
+			0.25f, -0.25f, 0.25f,//4
+			-0.25f, -0.25f, 0.25f,//7
 		};
 
 		static const int indices[] =
 		{
 			0, 1, 2,
-			2, 3, 0
+			2, 3, 0,
+
+			4, 5, 6,
+			6, 7, 4,
+
+			8, 9, 10,
+			10, 11, 8,
+
+			12, 13, 14,
+			14, 15, 12,
+
+			16, 17, 18,
+			18, 19, 16,
+
+			20, 21, 22,
+			22, 23, 20
 		};
 
 		static const float texCoords[] =
@@ -97,23 +137,47 @@ public:
 			0.0f, 0.0f,
 			1.0f, 0.0f,
 			1.0f, 1.0f,
-			0.0f, 1.0f
+			0.0f, 1.0f,
 
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+			0.0f, 1.0f,
+
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+			0.0f, 1.0f,
+
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+			0.0f, 1.0f,
+
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+			0.0f, 1.0f,
+
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+			0.0f, 1.0f,
 		};
 
-		glGenBuffers(1, &buffer);
-		glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		glGenBuffers(1, &vertBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
 
-		glGenBuffers(1, &indibuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indibuffer);
+		glGenBuffers(1, &indBuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indBuffer);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 		glEnableVertexAttribArray(0);
 
-		glGenBuffers(1, &texbuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, texbuffer);
+		glGenBuffers(1, &texBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, texBuffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
 
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -131,15 +195,12 @@ public:
 
 		int width, height, nrChannels;
 		static unsigned char* data = stbi_load("../../../Sandbox/res/media/wall.jpg", &width, &height, &nrChannels, 0);
-		if (data)
-		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-		}
-		else
-		{
+
+		if (!data)
 			std::cout << "Fail Texture Load" << std::endl;
-		}
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
 
 		glGenTextures(1, &texture2);
 		glBindTexture(GL_TEXTURE_2D, texture2);
@@ -150,19 +211,14 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		data = stbi_load("../../../Sandbox/res/media/smile.jpg", &width, &height, &nrChannels, 0);
-		if (data)
-		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-		}
-		else
-		{
+
+		if (!data)
 			std::cout << "Fail Texture Load" << std::endl;
-		}
 
-		
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
 		stbi_image_free(data);
-
 	}
 
 	void render(double currentTime)
@@ -171,36 +227,69 @@ public:
 		GLfloat color[] = { 0.0f, 0.25f, 0.0f, 1.0f };
 		glClearBufferfv(GL_COLOR, 0, color);
 
-		glm::mat4 trans = glm::mat4(1.0f);
-		trans = glm::rotate(trans, (float)currentTime, glm::vec3(0.0f, 0.0f, 1.0f));
-
+		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 
 		glUseProgram(rendering_program);
 
 		glUniform1i(glGetUniformLocation(rendering_program, "myTex1"), 0);
 		glUniform1i(glGetUniformLocation(rendering_program, "myTex2"), 1);
 
-		unsigned int transformLoc = glGetUniformLocation(rendering_program, "transMat");
-		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
-
-
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 
+		int mv_location = glGetUniformLocation(rendering_program, "mv_matrix");
+		int proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
+		
+		float f = (float)currentTime;
+		float aspect = (float)info.width / (float)info.height;
+		glm::mat4 proj_matrix = glm::mat4(1.0f);
+		glm::mat4 mv_matrix = glm::mat4(1.0f);
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		proj_matrix = 
+			glm::perspective(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
 
+		for (int i = 0; i < 3; i++)
+		{
+			float extra = i / 3.0;
+			mv_matrix =
+				glm::translate(glm::mat4(1.0f), glm::vec3(0.0f + extra, 0.0f + extra * 2, -5.0f)) *
+				glm::translate(glm::mat4(1.0f), glm::vec3(sinf(f) * 1.0f, cosf(f) * 1.0f, sinf(f) * cosf(f) * 2.0f)) *
+				glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+				glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+
+			glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
+			glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
+
+			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		}
+
+		for (int i = 0; i < 3; i++)
+		{
+			float extra = -i / 3.0;
+			mv_matrix =
+				glm::translate(glm::mat4(1.0f), glm::vec3(0.0f + extra, 0.0f + extra * 2, -5.0f)) *
+				glm::translate(glm::mat4(1.0f), glm::vec3(sinf(f) * 1.0f, cosf(f) * 1.0f, sinf(f) * cosf(f) * 2.0f)) *
+				glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+				glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+
+			glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
+			glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
+
+			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		}
 	}
 
 	void shutdown()
 	{
 		glDeleteVertexArrays(1, &vao);
 		glDeleteProgram(rendering_program);
-		glDeleteBuffers(1, &buffer);
-		glDeleteBuffers(1, &indibuffer);
-		glDeleteBuffers(1, &texbuffer); 
+		glDeleteBuffers(1, &vertBuffer);
+		glDeleteBuffers(1, &indBuffer);
+		glDeleteBuffers(1, &texBuffer);
 		glDeleteTextures(1, &texture1);
 		glDeleteTextures(1, &texture2);
 	}
