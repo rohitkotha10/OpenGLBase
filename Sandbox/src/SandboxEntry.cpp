@@ -63,12 +63,16 @@ class my_app : public OpenGLBase::OpenGLApp
 	GLuint texture1;
 	GLuint texture2;
 
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+
+
 public:
 	void init()
 	{
 		info.width = 800;
 		info.height = 600;
-		info.title = "Textures";
+		info.title = "Camera With Keyboard Movement";
 	}
 
 	void startup()
@@ -241,18 +245,32 @@ public:
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 
-		glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 4.0f);
-		glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-		glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
-		glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-		glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-		glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
-
 		int proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
 		int view_location = glGetUniformLocation(rendering_program, "view_matrix");
 		int model_location = glGetUniformLocation(rendering_program, "model_matrix");
 
+		static glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 4.0f);
+		static glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+		static glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+			
 		float time = (float)currentTime;
+
+		float currentFrame = time;
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		const float cameraSpeed = 2.5f * deltaTime;
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+			cameraPos += cameraSpeed * cameraFront;
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			cameraPos -= cameraSpeed * cameraFront;
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+
+
+
 		float aspect = (float)info.width / (float)info.height;
 		glm::mat4 proj_matrix = glm::mat4(1.0f);
 		glm::mat4 view_matrix = glm::mat4(1.0f);
@@ -261,13 +279,8 @@ public:
 		proj_matrix =
 			glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
-		const float radius = 4.0f;
-		float camX = sin(time) * radius;
-		float camZ = cos(time) * radius;
-		cameraPos.x = camX;
-		cameraPos.z = camZ;
 		view_matrix =
-			glm::lookAt(cameraPos, cameraTarget, cameraUp);
+			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 		glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
 		glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
