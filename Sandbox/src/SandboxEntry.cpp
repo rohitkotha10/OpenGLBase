@@ -51,6 +51,59 @@ GLuint compile_shaders(void)
 	return program;
 }
 
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 4.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+bool firstMouse = true;
+float yaw = -90.0f;
+float pitch = 0.0f;
+float lastX = 800.0f / 2.0;
+float lastY = 600.0 / 2.0;
+float fov = 45.0f;
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos;
+	lastX = xpos;
+	lastY = ypos;
+
+	float sensitivity = 0.1f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	fov -= (float)yoffset;
+	if (fov < 1.0f)
+		fov = 1.0f;
+	if (fov > 45.0f)
+		fov = 45.0f;
+}
+
 class my_app : public OpenGLBase::OpenGLApp
 {
 	GLuint rendering_program;
@@ -72,7 +125,7 @@ public:
 	{
 		info.width = 800;
 		info.height = 600;
-		info.title = "Camera With Keyboard Movement";
+		info.title = "Camera";
 	}
 
 	void startup()
@@ -80,6 +133,11 @@ public:
 		rendering_program = compile_shaders();
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
+
+ 		glfwSetCursorPosCallback(window, mouse_callback);
+		glfwSetScrollCallback(window, scroll_callback);
+
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		static const GLfloat vertex_positions[] =
 		{
@@ -249,17 +307,13 @@ public:
 		int view_location = glGetUniformLocation(rendering_program, "view_matrix");
 		int model_location = glGetUniformLocation(rendering_program, "model_matrix");
 
-		static glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 4.0f);
-		static glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-		static glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-			
 		float time = (float)currentTime;
 
 		float currentFrame = time;
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		const float cameraSpeed = 2.5f * deltaTime;
+		const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 			cameraPos += cameraSpeed * cameraFront;
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -269,15 +323,13 @@ public:
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 
-
-
 		float aspect = (float)info.width / (float)info.height;
 		glm::mat4 proj_matrix = glm::mat4(1.0f);
 		glm::mat4 view_matrix = glm::mat4(1.0f);
 		glm::mat4 model_matrix = glm::mat4(1.0f);
 
 		proj_matrix =
-			glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+			glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
 
 		view_matrix =
 			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);

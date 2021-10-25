@@ -32,12 +32,9 @@ namespace OpenGLBase
 		}
 
 		glfwMakeContextCurrent(window);
+		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
 		glewInit();
-
-		//glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-		// glad: load all OpenGL function pointers
-		// ---------------------------------------
 		if (glewInit() != GLEW_OK)
 		{
 			std::cout << "Failed to initialize GLEW" << std::endl;
