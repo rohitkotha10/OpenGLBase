@@ -241,46 +241,52 @@ public:
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 
-		int mv_location = glGetUniformLocation(rendering_program, "mv_matrix");
+		glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 4.0f);
+		glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+		glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+		glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+		glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
 		int proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
-		
-		float f = (float)currentTime;
+		int view_location = glGetUniformLocation(rendering_program, "view_matrix");
+		int model_location = glGetUniformLocation(rendering_program, "model_matrix");
+
+		float time = (float)currentTime;
 		float aspect = (float)info.width / (float)info.height;
 		glm::mat4 proj_matrix = glm::mat4(1.0f);
-		glm::mat4 mv_matrix = glm::mat4(1.0f);
+		glm::mat4 view_matrix = glm::mat4(1.0f);
+		glm::mat4 model_matrix = glm::mat4(1.0f);
 
-		proj_matrix = 
-			glm::perspective(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
+		proj_matrix =
+			glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
-		for (int i = 0; i < 3; i++)
-		{
-			float extra = i / 3.0;
-			mv_matrix =
-				glm::translate(glm::mat4(1.0f), glm::vec3(0.0f + extra, 0.0f + extra * 2, -5.0f)) *
-				glm::translate(glm::mat4(1.0f), glm::vec3(sinf(f) * 1.0f, cosf(f) * 1.0f, sinf(f) * cosf(f) * 2.0f)) *
-				glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		const float radius = 4.0f;
+		float camX = sin(time) * radius;
+		float camZ = cos(time) * radius;
+		cameraPos.x = camX;
+		cameraPos.z = camZ;
+		view_matrix =
+			glm::lookAt(cameraPos, cameraTarget, cameraUp);
 
-			glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
-			glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
+		glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
+		glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
 
-			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-		}
+		model_matrix =
+			glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
 
-		for (int i = 0; i < 3; i++)
-		{
-			float extra = -i / 3.0;
-			mv_matrix =
-				glm::translate(glm::mat4(1.0f), glm::vec3(0.0f + extra, 0.0f + extra * 2, -5.0f)) *
-				glm::translate(glm::mat4(1.0f), glm::vec3(sinf(f) * 1.0f, cosf(f) * 1.0f, sinf(f) * cosf(f) * 2.0f)) *
-				glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-				glm::rotate(glm::mat4(1.0f), (float)currentTime * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-			glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
-			glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
+		model_matrix =
+			glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
 
-			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-		}
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 	}
 
 	void shutdown()
