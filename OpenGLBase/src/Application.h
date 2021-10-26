@@ -25,12 +25,16 @@ namespace OpenGLBase
 	{
 	public:
 		OpenGLApp() {};
+		
 		virtual ~OpenGLApp() {};
-		virtual void init();
+		
 		virtual void run();
-		virtual void startup();
-		virtual void render(double currentTime);
-		virtual void shutdown();
+
+		virtual void init() {};
+		virtual void startup() {};
+		virtual void render(double currentTime) {};
+		virtual void shutdown() {};
+		
 		struct APPINFO
 		{
 			std::string title = "Welcome";
@@ -46,8 +50,7 @@ namespace OpenGLBase
 	};
 };
 
-std::string parse(std::string shadertype);
-
+std::string parse(std::string shaderPath);
 
 #define START_APP(my_app)        \
 int main()                       \
