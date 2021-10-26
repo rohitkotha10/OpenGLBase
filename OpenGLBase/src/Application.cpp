@@ -1,5 +1,5 @@
 #include "Application.h"
-#include <stdio.h>
+
 
 namespace OpenGLBase
 {
@@ -73,16 +73,11 @@ namespace OpenGLBase
 		glfwDestroyWindow(window);
 		glfwTerminate();
 	};
-
-	void OpenGLApp::init() {};
-	void OpenGLApp::startup() {};
-	void OpenGLApp::render(double currentTime) {};
-	void OpenGLApp::shutdown() {};
 }
 
-std::string parse(std::string shadertype)
+std::string parse(std::string shaderPath)
 {
-	std::ifstream ifs(shadertype);
+	std::ifstream ifs(shaderPath);
 
 	std::string final;
 

@@ -12,9 +12,9 @@
 #include <string>
 #include <fstream>
 
-#include "../vendor/imgui/imgui.h"
-#include "../vendor/imgui/imgui_impl_glfw.h"
-#include "../vendor/imgui/imgui_impl_opengl3.h"
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_glfw.h>
+#include <imgui/imgui_impl_opengl3.h>
 
 namespace OpenGLBase
 {
@@ -25,12 +25,16 @@ namespace OpenGLBase
 	{
 	public:
 		OpenGLApp() {};
+		
 		virtual ~OpenGLApp() {};
-		virtual void init();
+		
 		virtual void run();
-		virtual void startup();
-		virtual void render(double currentTime);
-		virtual void shutdown();
+
+		virtual void init() {};
+		virtual void startup() {};
+		virtual void render(double currentTime) {};
+		virtual void shutdown() {};
+		
 		struct APPINFO
 		{
 			std::string title = "Welcome";
@@ -46,8 +50,7 @@ namespace OpenGLBase
 	};
 };
 
-std::string parse(std::string shadertype);
-
+std::string parse(std::string shaderPath);
 
 #define START_APP(my_app)        \
 int main()                       \

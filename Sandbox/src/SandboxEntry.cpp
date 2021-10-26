@@ -6,10 +6,10 @@ GLuint compile_shaders(void)
 	GLuint fs;
 	GLuint program;
 
-	std::string vs_string = parse("../../../Sandbox/res/shaders/vs.shader");
+	std::string vs_string = parse("res/shaders/vs.shader");
 	static const GLchar* vs_source[] = { vs_string.c_str() };
 
-	std::string fs_string = parse("../../../Sandbox/res/shaders/fs.shader");
+	std::string fs_string = parse("res/shaders/fs.shader");
 	static const GLchar* fs_source[] = { fs_string.c_str() };
 
 	vs = glCreateShader(GL_VERTEX_SHADER);
@@ -256,7 +256,7 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		int width, height, nrChannels;
-		static unsigned char* data = stbi_load("../../../Sandbox/res/media/wall.jpg", &width, &height, &nrChannels, 0);
+		static unsigned char* data = stbi_load("res/media/wall.jpg", &width, &height, &nrChannels, 0);
 
 		if (!data)
 			std::cout << "Fail Texture Load" << std::endl;
@@ -272,7 +272,7 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		data = stbi_load("../../../Sandbox/res/media/smile.jpg", &width, &height, &nrChannels, 0);
+		data = stbi_load("res/media/smile.jpg", &width, &height, &nrChannels, 0);
 
 		if (!data)
 			std::cout << "Fail Texture Load" << std::endl;
