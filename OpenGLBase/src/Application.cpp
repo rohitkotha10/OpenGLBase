@@ -1,4 +1,5 @@
 #include "Application.h"
+#include <stdio.h>
 
 namespace OpenGLBase
 {
@@ -41,20 +42,34 @@ namespace OpenGLBase
 			return;
 		}
 
+		const char* glsl_version = "#version 450";
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGui::StyleColorsDark();
+		ImGui_ImplGlfw_InitForOpenGL(window, true);
+		ImGui_ImplOpenGL3_Init(glsl_version);
+
 		startup();
 
 		do
 		{
 			processInput(window);
-
+			
 			render(glfwGetTime());
 
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			
 			glfwSwapBuffers(window);
 			glfwPollEvents();
 		} while (!glfwWindowShouldClose(window));
 
 		shutdown();
 
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+		ImGui::DestroyContext();
+		
 		glfwDestroyWindow(window);
 		glfwTerminate();
 	};

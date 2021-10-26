@@ -62,6 +62,10 @@ float lastX = 800.0f / 2.0;
 float lastY = 600.0 / 2.0;
 float fov = 45.0f;
 
+bool show_demo_window = true;
+bool show_another_window = false;
+ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (firstMouse)
@@ -123,8 +127,8 @@ class my_app : public OpenGLBase::OpenGLApp
 public:
 	void init()
 	{
-		info.width = 800;
-		info.height = 600;
+		info.width = 1280;
+		info.height = 720;
 		info.title = "Camera";
 	}
 
@@ -352,6 +356,20 @@ public:
 		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
 
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		{
+
+			ImGui::Begin("App Info");                            
+
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::End();
+		}
+
+
 	}
 
 	void shutdown()
