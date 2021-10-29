@@ -67,7 +67,7 @@ void onScrollUpdates(GLFWwindow* window, double xoffset, double yoffset)
 class my_app : public OpenGLApp
 {
 	Program program;
-	GLuint vao;
+	VertexArray vao;
 
 	GLuint vertBuffer;
 	GLuint indBuffer;
@@ -110,10 +110,11 @@ public:
 		vs.erase();
 		fs.erase();
 	}
+
 	void startup()
 	{
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
+		vao.create();
+		vao.bind();
 
 		glfwSetKeyCallback(window, keyboard_callback);
 		glfwSetCursorPosCallback(window, onCursorUpdates);
@@ -350,7 +351,7 @@ public:
 	void shutdown()
 	{
 		program.erase();
-		glDeleteVertexArrays(1, &vao);
+		vao.erase();
 		glDeleteBuffers(1, &vertBuffer);
 		glDeleteBuffers(1, &indBuffer);
 		glDeleteBuffers(1, &texBuffer);

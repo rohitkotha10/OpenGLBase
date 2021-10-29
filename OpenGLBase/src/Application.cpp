@@ -77,19 +77,3 @@ namespace OpenGLBase
 		glfwTerminate();
 	};
 }
-
-std::string parse(std::string shaderPath)
-{
-	std::ifstream ifs(shaderPath);
-
-	std::string final;
-
-	int cnt = 0;
-	while (!ifs.eof())
-	{
-		std::string temp;
-		getline(ifs, temp);
-		final += temp + '\n';
-	}
-	return final;
-}

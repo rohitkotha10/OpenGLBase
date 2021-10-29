@@ -50,8 +50,6 @@ namespace OpenGLBase
 	};
 };
 
-std::string parse(std::string shaderPath);
-
 #define START_APP(my_app)        \
 int main()                       \
 {                                \
