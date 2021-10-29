@@ -2,10 +2,9 @@
 
 namespace OpenGLBase
 {
-	GLuint Shader::create(ShaderType type)
+	void Shader::create(ShaderType type)
 	{
 		this->data = glCreateShader(type);
-		return this->data;
 	}
 	void Shader::source(std::string shaderPath)
 	{
@@ -20,13 +19,13 @@ namespace OpenGLBase
 			getline(ifs, temp);
 			final += temp + '\n';
 		}
-		this->add = final.c_str();
-		return glShaderSource(this->data, 1, &this->add, NULL);
+		this->shaderSource = final.c_str();
+		glShaderSource(this->data, 1, &this->shaderSource, NULL);
 	}
 
 	void Shader::compile()
 	{
-		return glCompileShader(this->data);
+		glCompileShader(this->data);
 	}
 
 	void Shader::debug()
@@ -43,6 +42,6 @@ namespace OpenGLBase
 	}
 	void Shader::erase()
 	{
-		return glDeleteShader(this->data);
+		glDeleteShader(this->data);
 	}
 }

@@ -163,6 +163,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Buffer.cpp" />
     <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp" />
@@ -177,6 +178,7 @@
     <ClCompile Include="src\VertexArray.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Buffer.h" />
     <ClInclude Include="src\Program.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="vendor\imgui\imconfig.h" />

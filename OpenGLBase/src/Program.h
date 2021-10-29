@@ -5,9 +5,10 @@ namespace OpenGLBase
 {
 	class Program
 	{
-	public:
 		GLuint data;
-		GLuint create();
+	public:
+		GLuint getData() { return data; };
+		void create();
 		void attach(Shader& shader );
 		void link();
 		void debug();

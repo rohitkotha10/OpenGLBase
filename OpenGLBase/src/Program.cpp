@@ -2,20 +2,19 @@
 
 namespace OpenGLBase
 {
-	GLuint Program::create()
+	void Program::create()
 	{
 		this->data = glCreateProgram();
-		return this->data;
 	}
 
 	void Program::attach(Shader& shader)
 	{
-		return glAttachShader(this->data, shader.data);
+		glAttachShader(this->data, shader.getData());
 	}
 
 	void Program::link()
 	{
-		return glLinkProgram(this->data);
+		glLinkProgram(this->data);
 	}
 
 	void Program::debug()
@@ -31,11 +30,11 @@ namespace OpenGLBase
 
 	void Program::use()
 	{
-		return glUseProgram(this->data);
+		glUseProgram(this->data);
 	}
 
 	void Program::erase()
 	{
-		return glDeleteProgram(this->data);
+		glDeleteProgram(this->data);
 	}
 }

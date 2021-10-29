@@ -20,6 +20,8 @@ void  keyboard_callback(GLFWwindow* window, int key, int scancode, int action, i
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+	if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 };
 
 void onCursorUpdates(GLFWwindow* window, double xpos, double ypos)
@@ -69,9 +71,10 @@ class my_app : public OpenGLApp
 	Program program;
 	VertexArray vao;
 
-	GLuint vertBuffer;
-	GLuint indBuffer;
-	GLuint texBuffer;
+	VertexBuffer vertCoord;
+	VertexBuffer texCoord;
+
+	IndexBuffer vertIndices;
 
 	GLuint texture1;
 	GLuint texture2;
@@ -159,7 +162,7 @@ public:
 			-0.25f, -0.25f, 0.25f,//7
 		};
 
-		static const int indices[] =
+		static const GLuint indices[] =
 		{
 			0, 1, 2,
 			2, 3, 0,
@@ -180,7 +183,7 @@ public:
 			22, 23, 20
 		};
 
-		static const float texCoords[] =
+		static const float tex_positions[] =
 		{
 			0.0f, 0.0f,
 			1.0f, 0.0f,
@@ -213,61 +216,60 @@ public:
 			0.0f, 1.0f,
 		};
 
+		//buffers
 
-		glGenBuffers(1, &vertBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
+		vertCoord.create();
+		vertCoord.bind();
+		vertCoord.setvec3f(vertex_positions, 24, 0);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(0);
+		texCoord.create();
+		texCoord.bind();
+		texCoord.setvec2f(tex_positions, 24, 1);
 
-		glGenBuffers(1, &texBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, texBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
+		vertIndices.create();
+		vertIndices.bind();
+		vertIndices.setIndices(indices, 36);
 
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(1);
 
-		glGenBuffers(1, &indBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+		//textures
+		{
+			stbi_set_flip_vertically_on_load(true);
 
-		stbi_set_flip_vertically_on_load(true);
+			glGenTextures(1, &texture1);
+			glBindTexture(GL_TEXTURE_2D, texture1);
 
-		glGenTextures(1, &texture1);
-		glBindTexture(GL_TEXTURE_2D, texture1);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			int width, height, nrChannels;
+			static unsigned char* data = stbi_load("res/media/wall.jpg", &width, &height, &nrChannels, 0);
 
-		int width, height, nrChannels;
-		static unsigned char* data = stbi_load("res/media/wall.jpg", &width, &height, &nrChannels, 0);
+			if (!data)
+				std::cout << "Fail Texture Load" << std::endl;
 
-		if (!data)
-			std::cout << "Fail Texture Load" << std::endl;
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
+			glGenTextures(1, &texture2);
+			glBindTexture(GL_TEXTURE_2D, texture2);
 
-		glGenTextures(1, &texture2);
-		glBindTexture(GL_TEXTURE_2D, texture2);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			data = stbi_load("res/media/smile.jpg", &width, &height, &nrChannels, 0);
 
-		data = stbi_load("res/media/smile.jpg", &width, &height, &nrChannels, 0);
+			if (!data)
+				std::cout << "Fail Texture Load" << std::endl;
 
-		if (!data)
-			std::cout << "Fail Texture Load" << std::endl;
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		stbi_image_free(data);
+			stbi_image_free(data);
+		}
 	}
 
 	void render(double currentTime)
@@ -277,17 +279,17 @@ public:
 		glDepthFunc(GL_LEQUAL);
 
 		program.use();
-		glUniform1i(glGetUniformLocation(program.data, "myTex1"), 0);
-		glUniform1i(glGetUniformLocation(program.data, "myTex2"), 1);
+		glUniform1i(glGetUniformLocation(program.getData(), "myTex1"), 0);
+		glUniform1i(glGetUniformLocation(program.getData(), "myTex2"), 1);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 
-		int proj_location = glGetUniformLocation(program.data, "proj_matrix");
-		int view_location = glGetUniformLocation(program.data, "view_matrix");
-		int model_location = glGetUniformLocation(program.data, "model_matrix");
+		int proj_location = glGetUniformLocation(program.getData(), "proj_matrix");
+		int view_location = glGetUniformLocation(program.getData(), "view_matrix");
+		int model_location = glGetUniformLocation(program.getData(), "model_matrix");
 
 		float time = (float)currentTime;
 
@@ -352,9 +354,9 @@ public:
 	{
 		program.erase();
 		vao.erase();
-		glDeleteBuffers(1, &vertBuffer);
-		glDeleteBuffers(1, &indBuffer);
-		glDeleteBuffers(1, &texBuffer);
+		vertCoord.erase();
+		texCoord.erase();
+		vertIndices.erase();
 		glDeleteTextures(1, &texture1);
 		glDeleteTextures(1, &texture2);
 	}

@@ -16,10 +16,11 @@ namespace OpenGLBase
 
 	class Shader
 	{
-	public:
-		const GLchar* add;
+		const GLchar* shaderSource;
 		GLuint data;
-		GLuint create(ShaderType type);
+	public:
+		GLuint getData() { return data; };
+		void create(ShaderType type);
 		void source(std::string shaderPath);
 		void compile();
 		void debug();
