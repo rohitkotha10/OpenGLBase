@@ -1,55 +1,6 @@
-#include "OpenGLBase.h";
+#include "OpenGLBase.h"
 
-GLuint compile_shaders(void)
-{
-	GLuint vs;
-	GLuint fs;
-	GLuint program;
-
-	std::string vs_string = parse("res/shaders/vs.shader");
-	static const GLchar* vs_source[] = { vs_string.c_str() };
-
-	std::string fs_string = parse("res/shaders/fs.shader");
-	static const GLchar* fs_source[] = { fs_string.c_str() };
-
-	vs = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vs, 1, vs_source, NULL);
-	glCompileShader(vs);
-	int success;
-	char infoLog[512];
-	glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(vs, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	fs = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fs, 1, fs_source, NULL);
-	glCompileShader(fs);
-	glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(fs, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	program = glCreateProgram();
-	glAttachShader(program, vs);
-	glAttachShader(program, fs);
-	glLinkProgram(program);
-	glGetProgramiv(program, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(program, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-	}
-
-	glDeleteShader(vs);
-	glDeleteShader(fs);
-
-	return program;
-}
+using namespace OpenGLBase;
 
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 4.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -62,7 +13,16 @@ float lastX = 800.0f / 2.0;
 float lastY = 600.0 / 2.0;
 float fov = 45.0f;
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+void  keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+};
+
+void onCursorUpdates(GLFWwindow* window, double xpos, double ypos)
 {
 	if (firstMouse)
 	{
@@ -95,7 +55,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	cameraFront = glm::normalize(direction);
 }
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void onScrollUpdates(GLFWwindow* window, double xoffset, double yoffset)
 {
 	fov -= (float)yoffset;
 	if (fov < 1.0f)
@@ -104,9 +64,9 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 		fov = 45.0f;
 }
 
-class my_app : public OpenGLBase::OpenGLApp
+class my_app : public OpenGLApp
 {
-	GLuint rendering_program;
+	Program program;
 	GLuint vao;
 
 	GLuint vertBuffer;
@@ -116,28 +76,53 @@ class my_app : public OpenGLBase::OpenGLApp
 	GLuint texture1;
 	GLuint texture2;
 
-	float deltaTime = 0.0f;
-	float lastFrame = 0.0f;
-
-
 public:
 	void init()
 	{
 		info.width = 1280;
 		info.height = 720;
 		info.title = "Camera";
+		info.color = new float[4]{ 0.25f, 0.35f, 0.35f, 1.0f };
+		info.fullscreen = 0;
 	}
 
+	void shaderCompile()
+	{
+		Shader vs;
+		Shader fs;
+
+		vs.create(VERTEX);
+		vs.source("res/shaders/vs.shader");
+		vs.compile();
+		vs.debug();
+
+		fs.create(FRAGMENT);
+		fs.source("res/shaders/fs.shader");
+		fs.compile();
+		fs.debug();
+
+		program.create();
+		program.attach(vs);
+		program.attach(fs);
+		program.link();
+		program.debug();
+
+		vs.erase();
+		fs.erase();
+	}
 	void startup()
 	{
-		rendering_program = compile_shaders();
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 
- 		//glfwSetCursorPosCallback(window, mouse_callback);
-		//glfwSetScrollCallback(window, scroll_callback);
+		glfwSetKeyCallback(window, keyboard_callback);
+		glfwSetCursorPosCallback(window, onCursorUpdates);
+		glfwSetScrollCallback(window, onScrollUpdates);
 
-		//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwFocusWindow(window);
+
 
 		static const GLfloat vertex_positions[] =
 		{
@@ -227,13 +212,10 @@ public:
 			0.0f, 1.0f,
 		};
 
+
 		glGenBuffers(1, &vertBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
-
-		glGenBuffers(1, &indBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 		glEnableVertexAttribArray(0);
@@ -244,6 +226,10 @@ public:
 
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 		glEnableVertexAttribArray(1);
+
+		glGenBuffers(1, &indBuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indBuffer);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 		stbi_set_flip_vertically_on_load(true);
 
@@ -285,43 +271,28 @@ public:
 
 	void render(double currentTime)
 	{
-
-		GLfloat color[] = { 0.0f, 0.25f, 0.0f, 1.0f };
-		glClearBufferfv(GL_COLOR, 0, color);
-
 		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
-		glUseProgram(rendering_program);
-
-		glUniform1i(glGetUniformLocation(rendering_program, "myTex1"), 0);
-		glUniform1i(glGetUniformLocation(rendering_program, "myTex2"), 1);
+		program.use();
+		glUniform1i(glGetUniformLocation(program.data, "myTex1"), 0);
+		glUniform1i(glGetUniformLocation(program.data, "myTex2"), 1);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 
-		int proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
-		int view_location = glGetUniformLocation(rendering_program, "view_matrix");
-		int model_location = glGetUniformLocation(rendering_program, "model_matrix");
+		int proj_location = glGetUniformLocation(program.data, "proj_matrix");
+		int view_location = glGetUniformLocation(program.data, "view_matrix");
+		int model_location = glGetUniformLocation(program.data, "model_matrix");
 
 		float time = (float)currentTime;
 
 		float currentFrame = time;
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-
-		const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			cameraPos += cameraSpeed * cameraFront;
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			cameraPos -= cameraSpeed * cameraFront;
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 
 		float aspect = (float)info.width / (float)info.height;
 		glm::mat4 proj_matrix = glm::mat4(1.0f);
@@ -359,16 +330,27 @@ public:
 		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
 
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		this->onKeyUpdate();
+	}
 
+	void onKeyUpdate()
+	{
+		const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
 
-
-
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+			cameraPos += cameraSpeed * cameraFront;
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			cameraPos -= cameraSpeed * cameraFront;
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	}
 
 	void shutdown()
 	{
+		program.erase();
 		glDeleteVertexArrays(1, &vao);
-		glDeleteProgram(rendering_program);
 		glDeleteBuffers(1, &vertBuffer);
 		glDeleteBuffers(1, &indBuffer);
 		glDeleteBuffers(1, &texBuffer);

@@ -145,6 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="imgui.ini" />
     <None Include="res\shaders\fs.shader" />
     <None Include="res\shaders\vs.shader" />
   </ItemGroup>

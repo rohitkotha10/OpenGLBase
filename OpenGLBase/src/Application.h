@@ -18,34 +18,34 @@
 
 namespace OpenGLBase
 {
-	void processInput(GLFWwindow* window);
+
 	void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 	class OpenGLApp
 	{
 	public:
 		OpenGLApp() {};
-		
+
 		virtual ~OpenGLApp() {};
-		
+
 		virtual void run();
 
 		virtual void init() {};
+		virtual void shaderCompile() {};
 		virtual void startup() {};
 		virtual void render(double currentTime) {};
 		virtual void shutdown() {};
-		
-		struct APPINFO
+
+		struct WindowInfo
 		{
 			std::string title = "Welcome";
 			int width = 800;
 			int height = 600;
-			int majorVersion = 4;
-			int minorVersion = 3;
+			float* color = new float[4]{ 0.15f, 0.15f, 0.15f, 0.15f };
+			bool fullscreen = 0;
 		};
 
-	protected:
-		APPINFO info;
+		WindowInfo info;
 		GLFWwindow* window = NULL;
 	};
 };
