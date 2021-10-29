@@ -9,5 +9,5 @@ uniform sampler2D myTex2;
 
 void main(void)
 {
-	color = mix(texture(myTex1, TexCrd), texture(myTex2, TexCrd), 0.2);
+	color = mix(texture(myTex1, TexCrd), texture(myTex2, TexCrd), 0.8);
 }

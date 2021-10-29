@@ -76,6 +76,9 @@ class my_app : public OpenGLApp
 
 	IndexBuffer vertIndices;
 
+	Texture tex1;
+	Texture tex2;
+
 	GLuint texture1;
 	GLuint texture2;
 
@@ -232,45 +235,15 @@ public:
 
 
 		//textures
-		{
-			stbi_set_flip_vertically_on_load(true);
+		flipTexture(true);
+		tex1.create();
+		tex1.bind();
+		tex1.setTexture("res/media/wall.jpg");
 
-			glGenTextures(1, &texture1);
-			glBindTexture(GL_TEXTURE_2D, texture1);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-			int width, height, nrChannels;
-			static unsigned char* data = stbi_load("res/media/wall.jpg", &width, &height, &nrChannels, 0);
-
-			if (!data)
-				std::cout << "Fail Texture Load" << std::endl;
-
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-
-			glGenTextures(1, &texture2);
-			glBindTexture(GL_TEXTURE_2D, texture2);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-			data = stbi_load("res/media/smile.jpg", &width, &height, &nrChannels, 0);
-
-			if (!data)
-				std::cout << "Fail Texture Load" << std::endl;
-
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-
-			stbi_image_free(data);
-		}
-	}
+		tex2.create();
+		tex2.bind();
+		tex2.setTexture("res/media/smile.jpg");
+}
 
 	void render(double currentTime)
 	{
@@ -279,13 +252,12 @@ public:
 		glDepthFunc(GL_LEQUAL);
 
 		program.use();
-		glUniform1i(glGetUniformLocation(program.getData(), "myTex1"), 0);
-		glUniform1i(glGetUniformLocation(program.getData(), "myTex2"), 1);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture1);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture2);
+		glUniform1i(glGetUniformLocation(program.getData(), "myTex1"), 0);
+		tex1.activate(TEX0);
+		
+		glUniform1i(glGetUniformLocation(program.getData(), "myTex2"), 1);
+		tex2.activate(TEX1);
 
 		int proj_location = glGetUniformLocation(program.getData(), "proj_matrix");
 		int view_location = glGetUniformLocation(program.getData(), "view_matrix");
