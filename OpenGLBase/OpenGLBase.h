@@ -5,3 +5,4 @@
 #include "src/VertexArray.h"
 #include "src/Buffer.h"
 #include "src/Texture.h"
+#include "src/Uniform.h"

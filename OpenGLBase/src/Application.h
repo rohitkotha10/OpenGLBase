@@ -34,6 +34,7 @@ namespace OpenGLBase
 		virtual void shaderCompile() {};
 		virtual void startup() {};
 		virtual void render(double currentTime) {};
+		virtual void imguiRender(double currentTime) {};
 		virtual void shutdown() {};
 
 		struct WindowInfo
