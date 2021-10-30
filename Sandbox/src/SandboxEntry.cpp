@@ -1,99 +1,31 @@
-#include "OpenGLBase.h";
+#include "OpenGLBase.h"
 
-GLuint compile_shaders(void)
-{
-	GLuint vs;
-	GLuint fs;
-	GLuint program;
+using namespace OpenGLBase;
 
-	std::string vs_string = parse("res/shaders/vs.shader");
-	static const GLchar* vs_source[] = { vs_string.c_str() };
-
-	std::string fs_string = parse("res/shaders/fs.shader");
-	static const GLchar* fs_source[] = { fs_string.c_str() };
-
-	vs = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vs, 1, vs_source, NULL);
-	glCompileShader(vs);
-	int success;
-	char infoLog[512];
-	glGetShaderiv(vs, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(vs, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	fs = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fs, 1, fs_source, NULL);
-	glCompileShader(fs);
-	glGetShaderiv(fs, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(fs, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	program = glCreateProgram();
-	glAttachShader(program, vs);
-	glAttachShader(program, fs);
-	glLinkProgram(program);
-	glGetProgramiv(program, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(program, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-	}
-
-	glDeleteShader(vs);
-	glDeleteShader(fs);
-
-	return program;
-}
-
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 4.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
+bool useCursor = true;
 bool firstMouse = true;
-float yaw = -90.0f;
-float pitch = 0.0f;
-float lastX = 800.0f / 2.0;
-float lastY = 600.0 / 2.0;
 float fov = 45.0f;
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+void  keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	if (firstMouse)
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+	if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
 	{
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
+		if (useCursor)
+		{
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			useCursor = !useCursor;
+		}
+
+		else
+		{
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			useCursor = !useCursor;
+		}
+		firstMouse = true;
 	}
-
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos;
-	lastX = xpos;
-	lastY = ypos;
-
-	float sensitivity = 0.1f;
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	yaw += xoffset;
-	pitch += yoffset;
-
-	if (pitch > 89.0f)
-		pitch = 89.0f;
-	if (pitch < -89.0f)
-		pitch = -89.0f;
-
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	direction.y = sin(glm::radians(pitch));
-	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraFront = glm::normalize(direction);
-}
+};
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
@@ -104,40 +36,86 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 		fov = 45.0f;
 }
 
-class my_app : public OpenGLBase::OpenGLApp
+class my_app : public OpenGLApp
 {
-	GLuint rendering_program;
-	GLuint vao;
+	Program program;
+	VertexArray vao;
 
-	GLuint vertBuffer;
-	GLuint indBuffer;
-	GLuint texBuffer;
+	VertexBuffer vertCoord;
+	VertexBuffer texCoord;
 
-	GLuint texture1;
-	GLuint texture2;
+	IndexBuffer vertIndices;
+
+	Texture tex1;
+	Texture tex2;
+
+	Uniform myTex1;
+	Uniform myTex2;
+	Uniform model;
+	Uniform view;
+	Uniform projection;
+
+	glm::mat4 proj_matrix = glm::mat4(1.0f);
+	glm::mat4 view_matrix = glm::mat4(1.0f);
+	glm::mat4 model_matrix = glm::mat4(1.0f);
+	glm::vec3 translate = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 4.0f);
+	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	float yaw = -90.0f;
+	float pitch = 0.0f;
+	float lastX = 800.0f / 2.0;
+	float lastY = 600.0 / 2.0;
 
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
-
 
 public:
 	void init()
 	{
 		info.width = 1280;
 		info.height = 720;
-		info.title = "Camera";
+		info.title = "OpenGLBase";
+		info.color = new float[4]{ 0.25f, 0.35f, 0.35f, 1.0f };
+		info.fullscreen = 0;
+	}
+
+	void shaderCompile()
+	{
+		Shader vs;
+		Shader fs;
+
+		vs.create(VERTEX);
+		vs.source("res/shaders/vs.shader");
+		vs.compile();
+		vs.debug();
+
+		fs.create(FRAGMENT);
+		fs.source("res/shaders/fs.shader");
+		fs.compile();
+		fs.debug();
+
+		program.create();
+		program.attach(vs);
+		program.attach(fs);
+		program.link();
+		program.debug();
+
+		vs.erase();
+		fs.erase();
 	}
 
 	void startup()
 	{
-		rendering_program = compile_shaders();
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
 
- 		//glfwSetCursorPosCallback(window, mouse_callback);
-		//glfwSetScrollCallback(window, scroll_callback);
+		glfwSetKeyCallback(window, keyboard_callback);
+		glfwSetScrollCallback(window, scroll_callback);
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-		//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		vao.create();
+		vao.bind();
 
 		static const GLfloat vertex_positions[] =
 		{
@@ -173,7 +151,7 @@ public:
 			-0.25f, -0.25f, 0.25f,//7
 		};
 
-		static const int indices[] =
+		static const GLuint indices[] =
 		{
 			0, 1, 2,
 			2, 3, 0,
@@ -194,7 +172,7 @@ public:
 			22, 23, 20
 		};
 
-		static const float texCoords[] =
+		static const float tex_positions[] =
 		{
 			0.0f, 0.0f,
 			1.0f, 0.0f,
@@ -227,85 +205,50 @@ public:
 			0.0f, 1.0f,
 		};
 
-		glGenBuffers(1, &vertBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
+		//buffers
+		vertCoord.create();
+		vertCoord.bind();
+		vertCoord.setvec3f(vertex_positions, 24, 0);
 
-		glGenBuffers(1, &indBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+		texCoord.create();
+		texCoord.bind();
+		texCoord.setvec2f(tex_positions, 24, 1);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(0);
+		vertIndices.create();
+		vertIndices.bind();
+		vertIndices.setIndices(indices, 36);
 
-		glGenBuffers(1, &texBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, texBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
 
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(1);
+		//textures
+		flipTexture(true);
+		tex1.create();
+		tex1.bind();
+		tex1.setTexture("res/media/wall.jpg");
 
-		stbi_set_flip_vertically_on_load(true);
-
-		glGenTextures(1, &texture1);
-		glBindTexture(GL_TEXTURE_2D, texture1);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		int width, height, nrChannels;
-		static unsigned char* data = stbi_load("res/media/wall.jpg", &width, &height, &nrChannels, 0);
-
-		if (!data)
-			std::cout << "Fail Texture Load" << std::endl;
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glGenTextures(1, &texture2);
-		glBindTexture(GL_TEXTURE_2D, texture2);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		data = stbi_load("res/media/smile.jpg", &width, &height, &nrChannels, 0);
-
-		if (!data)
-			std::cout << "Fail Texture Load" << std::endl;
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		stbi_image_free(data);
+		tex2.create();
+		tex2.bind();
+		tex2.setTexture("res/media/smile.jpg");
 	}
 
 	void render(double currentTime)
 	{
-
-		GLfloat color[] = { 0.0f, 0.25f, 0.0f, 1.0f };
-		glClearBufferfv(GL_COLOR, 0, color);
-
 		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
-		glUseProgram(rendering_program);
+		program.use();
 
-		glUniform1i(glGetUniformLocation(rendering_program, "myTex1"), 0);
-		glUniform1i(glGetUniformLocation(rendering_program, "myTex2"), 1);
+		myTex1.create(program, "myTex1");
+		myTex1.set1i(0);
+		tex1.activate(TEX0);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture1);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture2);
+		myTex2.create(program, "myTex2");
+		myTex2.set1i(1);
+		tex2.activate(TEX1);
 
-		int proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
-		int view_location = glGetUniformLocation(rendering_program, "view_matrix");
-		int model_location = glGetUniformLocation(rendering_program, "model_matrix");
+		model.create(program, "model_matrix");
+		view.create(program, "view_matrix");
+		projection.create(program, "proj_matrix");
 
 		float time = (float)currentTime;
 
@@ -313,7 +256,47 @@ public:
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+		float aspect = (float)info.width / (float)info.height;
+
+		proj_matrix =
+			glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
+
+		view_matrix =
+			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+		model_matrix =
+			glm::translate(glm::mat4(1.0f), translate) *
+			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+
+		projection.setMat4fv(1, false, glm::value_ptr(proj_matrix));
+		view.setMat4fv(1, false, glm::value_ptr(view_matrix));
+		model.setMat4fv(1, false, glm::value_ptr(model_matrix));
+
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		
+		this->onKeyUpdate();
+		if (useCursor)
+			this->onCursor();
+	}
+
+	void imguiRender(double currentTime)
+	{
+
+		ImGui::Begin("OpenGLBase");
+		ImGui::SliderFloat3("Cube Translation", &translate.x, -3.0f, 3.0f);
+
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		
+		ImGui::Text("Press Left Ctrl to Enable/Disable Cursor");
+		ImGui::Text("Press Escape to Exit");
+		ImGui::End();
+	}
+
+	void onKeyUpdate()
+	{
 		const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
+
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 			cameraPos += cameraSpeed * cameraFront;
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -322,58 +305,53 @@ public:
 			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
 
-		float aspect = (float)info.width / (float)info.height;
-		glm::mat4 proj_matrix = glm::mat4(1.0f);
-		glm::mat4 view_matrix = glm::mat4(1.0f);
-		glm::mat4 model_matrix = glm::mat4(1.0f);
+	void onCursor()
+	{
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
 
-		proj_matrix =
-			glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
-
-		view_matrix =
-			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
-		glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
-		glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
-
-		static glm::vec3 translate = glm::vec3(0.0f, 0.0f, 0.0f);
-
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
+		if (firstMouse)
 		{
-
-			ImGui::Begin("Translate");
-			ImGui::SliderFloat3("float", &translate.x, -3.0f, 3.0f);
-
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			ImGui::End();
+			lastX = xpos;
+			lastY = ypos;
+			firstMouse = false;
 		}
 
-		model_matrix =
-			glm::translate(glm::mat4(1.0f), translate) *
-			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
+		float xoffset = xpos - lastX;
+		float yoffset = lastY - ypos;
+		lastX = xpos;
+		lastY = ypos;
 
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		float sensitivity = 0.1f;
+		xoffset *= sensitivity;
+		yoffset *= sensitivity;
 
+		yaw += xoffset;
+		pitch += yoffset;
 
+		if (pitch > 115.0f)
+			pitch = 115.0f;
+		if (pitch < -115.0f)
+			pitch = -115.0f;
 
-
+		glm::vec3 direction;
+		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		direction.y = sin(glm::radians(pitch));
+		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		cameraFront = glm::normalize(direction);
 	}
 
 	void shutdown()
 	{
-		glDeleteVertexArrays(1, &vao);
-		glDeleteProgram(rendering_program);
-		glDeleteBuffers(1, &vertBuffer);
-		glDeleteBuffers(1, &indBuffer);
-		glDeleteBuffers(1, &texBuffer);
-		glDeleteTextures(1, &texture1);
-		glDeleteTextures(1, &texture2);
+		program.erase();
+		vao.erase();
+		vertCoord.erase();
+		texCoord.erase();
+		vertIndices.erase();
+		tex1.erase();
+		tex2.erase();
 	}
 
 };

@@ -3,11 +3,6 @@
 
 namespace OpenGLBase
 {
-	void processInput(GLFWwindow* window)
-	{
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-			glfwSetWindowShouldClose(window, true);
-	};
 
 	void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	{
@@ -19,11 +14,15 @@ namespace OpenGLBase
 		init();
 
 		glfwInit();
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, info.majorVersion);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, info.minorVersion);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-		window = glfwCreateWindow(info.width, info.height, info.title.c_str(), NULL, NULL);
+		window = glfwCreateWindow(info.width,
+			info.height,
+			info.title.c_str(),
+			info.fullscreen ? glfwGetPrimaryMonitor() : NULL,
+			NULL);
 		
 		if (window == NULL)
 		{
@@ -33,9 +32,8 @@ namespace OpenGLBase
 		}
 
 		glfwMakeContextCurrent(window);
-		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
 		glewInit();
+
 		if (glewInit() != GLEW_OK)
 		{
 			std::cout << "Failed to initialize GLEW" << std::endl;
@@ -49,20 +47,31 @@ namespace OpenGLBase
 		ImGui_ImplGlfw_InitForOpenGL(window, true);
 		ImGui_ImplOpenGL3_Init(glsl_version);
 
+		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+		shaderCompile();
 		startup();
 
-		do
-		{
-			processInput(window);
-			
+		while (!glfwWindowShouldClose(window))
+		{	
+
+			glClearBufferfv(GL_COLOR, 0, info.color);
+
 			render(glfwGetTime());
+
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+
+			imguiRender(glfwGetTime());
 
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 			
-			glfwSwapBuffers(window);
 			glfwPollEvents();
-		} while (!glfwWindowShouldClose(window));
+			glfwSwapInterval(1);
+			glfwSwapBuffers(window);
+		}
 
 		shutdown();
 
@@ -73,20 +82,4 @@ namespace OpenGLBase
 		glfwDestroyWindow(window);
 		glfwTerminate();
 	};
-}
-
-std::string parse(std::string shaderPath)
-{
-	std::ifstream ifs(shaderPath);
-
-	std::string final;
-
-	int cnt = 0;
-	while (!ifs.eof())
-	{
-		std::string temp;
-		getline(ifs, temp);
-		final += temp + '\n';
-	}
-	return final;
 }
