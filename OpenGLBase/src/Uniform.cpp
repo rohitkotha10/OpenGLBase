@@ -16,4 +16,8 @@ namespace OpenGLBase
 	{
 		glUniformMatrix4fv(this->location, count, transpose, data);
 	}
+	void Uniform::setVec4(float x, float y, float z, float w)
+	{
+			glUniform4f(this->location, x, y, z, w);
+	}
 }

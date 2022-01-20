@@ -18,6 +18,7 @@ namespace OpenGLBase
 		void create(Program program, std::string name);
 		void set1i(int value);
 		void setMat4fv(int count, bool transpose, float* data);
+		void setVec4(float x, float y, float z, float w);
 		int getLocation() { return location; };
 	};
 }

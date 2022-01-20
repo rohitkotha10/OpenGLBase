@@ -39,8 +39,9 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 class my_app : public OpenGLApp
 {
 	Program program;
-	Program program2;
+	Program programLight;
 	VertexArray vao;
+	VertexArray vaoLight;
 
 	VertexBuffer vertCoord;
 	VertexBuffer texCoord;
@@ -50,8 +51,8 @@ class my_app : public OpenGLApp
 	Texture tex1;
 	Texture tex2;
 
-	Uniform myTex1;
-	Uniform myTex2;
+	Uniform objectColor;
+	Uniform lightColor;
 	Uniform model;
 	Uniform view;
 	Uniform projection;
@@ -88,7 +89,8 @@ public:
 	{
 		Shader vs;
 		Shader fs;
-		Shader fs2;
+		Shader vsLight;
+		Shader fsLight;
 
 		vs.create(VERTEX);
 		vs.source("res/shaders/vs.shader");
@@ -100,10 +102,15 @@ public:
 		fs.compile();
 		fs.debug();
 
-		fs2.create(FRAGMENT);
-		fs2.source("res/shaders/fs2.shader");
-		fs2.compile();
-		fs2.debug();
+		vsLight.create(VERTEX);
+		vsLight.source("res/shaders/vsLight.shader");
+		vsLight.compile();
+		vsLight.debug();
+
+		fsLight.create(FRAGMENT);
+		fsLight.source("res/shaders/fsLight.shader");
+		fsLight.compile();
+		fsLight.debug();
 
 		program.create();
 		program.attach(vs);
@@ -111,14 +118,16 @@ public:
 		program.link();
 		program.debug();
 
-		program2.create();
-		program2.attach(vs);
-		program2.attach(fs2);
-		program2.link();
-		program2.debug();
+		programLight.create();
+		programLight.attach(vsLight);
+		programLight.attach(fsLight);
+		programLight.link();
+		programLight.debug();
 
 		vs.erase();
 		fs.erase();
+		vsLight.erase();
+		fsLight.erase();
 	}
 
 	void startup()
@@ -127,9 +136,6 @@ public:
 		glfwSetKeyCallback(window, keyboard_callback);
 		glfwSetScrollCallback(window, scroll_callback);
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-		vao.create();
-		vao.bind();
 
 		static const GLfloat vertex_positions[] =
 		{
@@ -186,62 +192,23 @@ public:
 			22, 23, 20
 		};
 
-		static const float tex_positions[] =
-		{
-			0.0f, 0.0f,
-			1.0f, 0.0f,
-			1.0f, 1.0f,
-			0.0f, 1.0f,
 
-			0.0f, 0.0f,
-			1.0f, 0.0f,
-			1.0f, 1.0f,
-			0.0f, 1.0f,
-
-			0.0f, 0.0f,
-			1.0f, 0.0f,
-			1.0f, 1.0f,
-			0.0f, 1.0f,
-
-			0.0f, 0.0f,
-			1.0f, 0.0f,
-			1.0f, 1.0f,
-			0.0f, 1.0f,
-
-			0.0f, 0.0f,
-			1.0f, 0.0f,
-			1.0f, 1.0f,
-			0.0f, 1.0f,
-
-			0.0f, 0.0f,
-			1.0f, 0.0f,
-			1.0f, 1.0f,
-			0.0f, 1.0f,
-		};
-
-		//buffers
+		vao.create();
+		vaoLight.create();
 		vertCoord.create();
+		vertIndices.create();
+
+		vao.bind();
 		vertCoord.bind();
 		vertCoord.setvec3f(vertex_positions, 24, 0);
-
-		texCoord.create();
-		texCoord.bind();
-		texCoord.setvec2f(tex_positions, 24, 1);
-
-		vertIndices.create();
 		vertIndices.bind();
 		vertIndices.setIndices(indices, 36);
 
-
-		//textures
-		flipTexture(true);
-		tex1.create();
-		tex1.bind();
-		tex1.setTexture("res/media/wall.jpg");
-
-		tex2.create();
-		tex2.bind();
-		tex2.setTexture("res/media/smile.jpg");
+		vaoLight.bind();
+		vertCoord.bind();
+		vertCoord.setvec3f(vertex_positions, 24, 0);
+		vertIndices.bind();
+		vertIndices.setIndices(indices, 36);
 	}
 
 	void render(double currentTime)
@@ -249,20 +216,6 @@ public:
 		glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
-
-		program.use();
-
-		myTex1.create(program, "myTex1");
-		myTex1.set1i(0);
-		tex1.activate(TEX0);
-
-		myTex2.create(program, "myTex2");
-		myTex2.set1i(1);
-		tex2.activate(TEX1);
-
-		model.create(program, "model_matrix");
-		view.create(program, "view_matrix");
-		projection.create(program, "proj_matrix");
 
 		float time = (float)currentTime;
 
@@ -272,51 +225,54 @@ public:
 
 		float aspect = (float)info.width / (float)info.height;
 
+		program.use();
+
+		objectColor.create(program, "objectColor");
+		lightColor.create(program, "lightColor");
+
+		model.create(program, "model_matrix");
+		view.create(program, "view_matrix");
+		projection.create(program, "proj_matrix");
+
 		proj_matrix =
 			glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
 
 		view_matrix =
 			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-		
-		float acceleration = 0.0f;
-		float velocity = acceleration * time + 1.0f;
-		float rotation = velocity * time;
 
 		model_matrix =
 			glm::translate(glm::mat4(1.0f), translate) *
-			glm::rotate(glm::mat4(1.0f), rotation, glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), rotation, glm::vec3(1.0f, 0.0f, 0.0f));
+			glm::rotate(glm::mat4(1.0f), 2.0f * time, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), 2.0f * time, glm::vec3(1.0f, 0.0f, 0.0f));
 
+		objectColor.setVec4(1.0f, 0.5f, 0.31f, 1.0f);
+		lightColor.setVec4(1.0f, 1.0f, 1.0f, 1.0f);
 		projection.setMat4fv(1, false, glm::value_ptr(proj_matrix));
 		view.setMat4fv(1, false, glm::value_ptr(view_matrix));
 		model.setMat4fv(1, false, glm::value_ptr(model_matrix));
 
+
+		vao.bind();
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-		program2.use();
-		model.create(program2, "model_matrix");
-		view.create(program2, "view_matrix");
-		projection.create(program2, "proj_matrix");
+		programLight.use();
 
-		proj_matrix =
-			glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
-
-		view_matrix =
-			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		model.create(programLight, "model_matrix");
+		view.create(programLight, "view_matrix");
+		projection.create(programLight, "proj_matrix");
 
 		model_matrix =
 			glm::translate(glm::mat4(1.0f), translate2) *
-			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+			glm::rotate(glm::mat4(1.0f), 2.0f * time, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), 2.0f * time, glm::vec3(1.0f, 0.0f, 0.0f));
 
 		projection.setMat4fv(1, false, glm::value_ptr(proj_matrix));
 		view.setMat4fv(1, false, glm::value_ptr(view_matrix));
 		model.setMat4fv(1, false, glm::value_ptr(model_matrix));
 
+		vaoLight.bind();
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-		
-		
 		this->onKeyUpdate();
 		if (useCursor)
 			this->onCursor();
@@ -329,7 +285,7 @@ public:
 		ImGui::SliderFloat3("Cube Translation", &translate.x, -3.0f, 3.0f);
 
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		
+
 		ImGui::Text("Press Left Ctrl to Enable/Disable Cursor");
 		ImGui::Text("Press Escape to Exit");
 		ImGui::End();
