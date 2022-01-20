@@ -147,6 +147,7 @@
   <ItemGroup>
     <None Include="imgui.ini" />
     <None Include="res\shaders\fs.shader" />
+    <None Include="res\shaders\fs2.shader" />
     <None Include="res\shaders\vs.shader" />
   </ItemGroup>
   <ItemGroup>

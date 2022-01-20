@@ -39,6 +39,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 class my_app : public OpenGLApp
 {
 	Program program;
+	Program program2;
 	VertexArray vao;
 
 	VertexBuffer vertCoord;
@@ -59,13 +60,14 @@ class my_app : public OpenGLApp
 	glm::mat4 view_matrix = glm::mat4(1.0f);
 	glm::mat4 model_matrix = glm::mat4(1.0f);
 	glm::vec3 translate = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 translate2 = glm::vec3(2.0f, 0.0f, 0.0f);
 
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 4.0f);
 	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	float yaw = -90.0f;
-	float pitch = 0.0f;
+	float yaw = -90.0f;//horizontal
+	float pitch = 0.0f;//vertical
 	float lastX = 800.0f / 2.0;
 	float lastY = 600.0 / 2.0;
 
@@ -86,6 +88,7 @@ public:
 	{
 		Shader vs;
 		Shader fs;
+		Shader fs2;
 
 		vs.create(VERTEX);
 		vs.source("res/shaders/vs.shader");
@@ -97,11 +100,22 @@ public:
 		fs.compile();
 		fs.debug();
 
+		fs2.create(FRAGMENT);
+		fs2.source("res/shaders/fs2.shader");
+		fs2.compile();
+		fs2.debug();
+
 		program.create();
 		program.attach(vs);
 		program.attach(fs);
 		program.link();
 		program.debug();
+
+		program2.create();
+		program2.attach(vs);
+		program2.attach(fs2);
+		program2.link();
+		program2.debug();
 
 		vs.erase();
 		fs.erase();
@@ -263,9 +277,35 @@ public:
 
 		view_matrix =
 			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		
+		float acceleration = 0.0f;
+		float velocity = acceleration * time + 1.0f;
+		float rotation = velocity * time;
 
 		model_matrix =
 			glm::translate(glm::mat4(1.0f), translate) *
+			glm::rotate(glm::mat4(1.0f), rotation, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), rotation, glm::vec3(1.0f, 0.0f, 0.0f));
+
+		projection.setMat4fv(1, false, glm::value_ptr(proj_matrix));
+		view.setMat4fv(1, false, glm::value_ptr(view_matrix));
+		model.setMat4fv(1, false, glm::value_ptr(model_matrix));
+
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+		program2.use();
+		model.create(program2, "model_matrix");
+		view.create(program2, "view_matrix");
+		projection.create(program2, "proj_matrix");
+
+		proj_matrix =
+			glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
+
+		view_matrix =
+			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+		model_matrix =
+			glm::translate(glm::mat4(1.0f), translate2) *
 			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)) *
 			glm::rotate(glm::mat4(1.0f), time * 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
 
@@ -274,6 +314,8 @@ public:
 		model.setMat4fv(1, false, glm::value_ptr(model_matrix));
 
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+		
 		
 		this->onKeyUpdate();
 		if (useCursor)
