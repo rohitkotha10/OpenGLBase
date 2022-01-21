@@ -12,8 +12,8 @@ namespace OpenGLBase
 		void create();
 		void bind();
 		void unbind();
-		void setvec3f(const GLfloat* verts, int cnt, int destination);
-		void setvec2f(const GLfloat* verts, int cnt, int destination);
+		void setvec3(const GLfloat* verts, int cnt);
+		void setvec2(const GLfloat* verts, int cnt);
 		void erase();
 
 	};

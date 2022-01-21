@@ -40,22 +40,12 @@ class my_app : public OpenGLApp
 {
 	Program program;
 	Program programLight;
+
 	VertexArray vao;
 	VertexArray vaoLight;
 
 	VertexBuffer vertCoord;
-	VertexBuffer texCoord;
-
 	IndexBuffer vertIndices;
-
-	Texture tex1;
-	Texture tex2;
-
-	Uniform objectColor;
-	Uniform lightColor;
-	Uniform model;
-	Uniform view;
-	Uniform projection;
 
 	glm::mat4 proj_matrix = glm::mat4(1.0f);
 	glm::mat4 view_matrix = glm::mat4(1.0f);
@@ -73,7 +63,7 @@ class my_app : public OpenGLApp
 	float lastY = 600.0 / 2.0;
 
 	float deltaTime = 0.0f;
-	float lastFrame = 0.0f;
+	float lastFrame = 0.0f;		
 
 public:
 	void init()
@@ -128,7 +118,7 @@ public:
 		fs.erase();
 		vsLight.erase();
 		fsLight.erase();
-	}
+	}	
 
 	void startup()
 	{
@@ -199,14 +189,20 @@ public:
 		vertIndices.create();
 
 		vao.bind();
+
 		vertCoord.bind();
-		vertCoord.setvec3f(vertex_positions, 24, 0);
+		vertCoord.setvec3(vertex_positions, 24);
+		vao.setAttrib(0, 3, GL_FLOAT);
+		vao.enable(0);
 		vertIndices.bind();
 		vertIndices.setIndices(indices, 36);
 
 		vaoLight.bind();
+
 		vertCoord.bind();
-		vertCoord.setvec3f(vertex_positions, 24, 0);
+		vertCoord.setvec3(vertex_positions, 24);
+		vao.setAttrib(0, 3, GL_FLOAT);
+		vao.enable(0);
 		vertIndices.bind();
 		vertIndices.setIndices(indices, 36);
 	}
@@ -227,13 +223,6 @@ public:
 
 		program.use();
 
-		objectColor.create(program, "objectColor");
-		lightColor.create(program, "lightColor");
-
-		model.create(program, "model_matrix");
-		view.create(program, "view_matrix");
-		projection.create(program, "proj_matrix");
-
 		proj_matrix =
 			glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
 
@@ -245,30 +234,23 @@ public:
 			glm::rotate(glm::mat4(1.0f), 2.0f * time, glm::vec3(0.0f, 1.0f, 0.0f)) *
 			glm::rotate(glm::mat4(1.0f), 2.0f * time, glm::vec3(1.0f, 0.0f, 0.0f));
 
-		objectColor.setVec4(1.0f, 0.5f, 0.31f, 1.0f);
-		lightColor.setVec4(1.0f, 1.0f, 1.0f, 1.0f);
-		projection.setMat4fv(1, false, glm::value_ptr(proj_matrix));
-		view.setMat4fv(1, false, glm::value_ptr(view_matrix));
-		model.setMat4fv(1, false, glm::value_ptr(model_matrix));
+		program.setVec4("objectColor", 1.0f, 0.5f, 0.31f, 1.0f);
+		program.setVec4("lightColor", 1.0f, 1.0f, 1.0f, 1.0f);
 
+		program.setMat4("proj_matrix", 1, false, glm::value_ptr(proj_matrix));
+		program.setMat4("view_matrix", 1, false, glm::value_ptr(view_matrix));
+		program.setMat4("model_matrix", 1, false, glm::value_ptr(model_matrix));
 
 		vao.bind();
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
 		programLight.use();
-
-		model.create(programLight, "model_matrix");
-		view.create(programLight, "view_matrix");
-		projection.create(programLight, "proj_matrix");
-
 		model_matrix =
-			glm::translate(glm::mat4(1.0f), translate2) *
-			glm::rotate(glm::mat4(1.0f), 2.0f * time, glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), 2.0f * time, glm::vec3(1.0f, 0.0f, 0.0f));
+			glm::translate(glm::mat4(1.0f), translate2);
 
-		projection.setMat4fv(1, false, glm::value_ptr(proj_matrix));
-		view.setMat4fv(1, false, glm::value_ptr(view_matrix));
-		model.setMat4fv(1, false, glm::value_ptr(model_matrix));
+		programLight.setMat4("proj_matrix", 1, false, glm::value_ptr(proj_matrix));
+		programLight.setMat4("view_matrix", 1, false, glm::value_ptr(view_matrix));
+		programLight.setMat4("model_matrix", 1, false, glm::value_ptr(model_matrix));
 
 		vaoLight.bind();
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
@@ -346,10 +328,7 @@ public:
 		program.erase();
 		vao.erase();
 		vertCoord.erase();
-		texCoord.erase();
 		vertIndices.erase();
-		tex1.erase();
-		tex2.erase();
 	}
 
 };

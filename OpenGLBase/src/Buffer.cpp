@@ -15,17 +15,13 @@ namespace OpenGLBase
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-	void VertexBuffer::setvec3f(const GLfloat* verts, int cnt, int destination)
+	void VertexBuffer::setvec3(const GLfloat* verts, int cnt)
 	{
 		glBufferData(GL_ARRAY_BUFFER, 3 * cnt * sizeof(float), verts, GL_STATIC_DRAW);
-		glVertexAttribPointer(destination, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(destination);
 	}
-	void VertexBuffer::setvec2f(const GLfloat* verts, int cnt, int destination)
+	void VertexBuffer::setvec2(const GLfloat* verts, int cnt)
 	{
 		glBufferData(GL_ARRAY_BUFFER, 2 * cnt * sizeof(float), verts, GL_STATIC_DRAW);
-		glVertexAttribPointer(destination, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(destination);
 	}
 	void VertexBuffer::erase()
 	{

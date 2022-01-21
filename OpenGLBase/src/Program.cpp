@@ -37,4 +37,25 @@ namespace OpenGLBase
 	{
 		glDeleteProgram(this->data);
 	}
+	void Program::setInt(std::string name, int value)
+	{
+		glUniform1i(glGetUniformLocation(this->data, name.c_str()), value);
+	}
+	void Program::setFloat(std::string name, float value)
+	{
+		glUniform1f(glGetUniformLocation(this->data, name.c_str()), value);
+	}
+	void Program::setBool(std::string name, bool value)
+	{
+		glUniform1i(glGetUniformLocation(this->data, name.c_str()), value);
+	}
+	void Program::setMat4(std::string name, int count, bool transpose, float* data)
+	{
+		glUniformMatrix4fv(glGetUniformLocation(this->data, name.c_str()), count, transpose, data);
+	}
+	void Program::setVec4(std::string name, float x, float y, float z, float w)
+	{
+		glUniform4f(glGetUniformLocation(this->data, name.c_str()), x, y, z, w);
+	}
+
 }
