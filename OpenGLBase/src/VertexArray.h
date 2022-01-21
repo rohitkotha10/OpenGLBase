@@ -13,7 +13,7 @@ namespace OpenGLBase
 		void create();
 		void bind();
 		void unbind();
-		void setAttrib(GLuint destination, GLint size, GLenum type);//assuming tightly packed and no offset
+		void setAttrib(GLuint destination, GLint size, GLenum type, GLsizei stride, const void* pointer);
 		void enable(GLuint destination);
 		void erase();
 	};

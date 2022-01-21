@@ -15,13 +15,13 @@ namespace OpenGLBase
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-	void VertexBuffer::setvec3(const GLfloat* verts, int cnt)
+	void VertexBuffer::setvec3(const GLfloat* verts, GLsizeiptr size)
 	{
-		glBufferData(GL_ARRAY_BUFFER, 3 * cnt * sizeof(float), verts, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, size, verts, GL_STATIC_DRAW);
 	}
-	void VertexBuffer::setvec2(const GLfloat* verts, int cnt)
+	void VertexBuffer::setvec2(const GLfloat* verts, GLsizeiptr size)
 	{
-		glBufferData(GL_ARRAY_BUFFER, 2 * cnt * sizeof(float), verts, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, size, verts, GL_STATIC_DRAW);
 	}
 	void VertexBuffer::erase()
 	{
@@ -40,9 +40,9 @@ namespace OpenGLBase
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
-	void IndexBuffer::setIndices(const GLuint* indices, int cnt)
+	void IndexBuffer::setIndices(const GLuint* indices, GLsizeiptr size)
 	{
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, cnt * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, indices, GL_STATIC_DRAW);
 	}
 	void IndexBuffer::erase()
 	{

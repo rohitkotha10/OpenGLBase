@@ -50,8 +50,8 @@ class my_app : public OpenGLApp
 	glm::mat4 proj_matrix = glm::mat4(1.0f);
 	glm::mat4 view_matrix = glm::mat4(1.0f);
 	glm::mat4 model_matrix = glm::mat4(1.0f);
-	glm::vec3 translate = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 translate2 = glm::vec3(2.0f, 0.0f, 0.0f);
+	glm::vec3 objectPos = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 lightPos = glm::vec3(0.0f, 0.2f, 10.0f);
 
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 4.0f);
 	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -63,7 +63,7 @@ class my_app : public OpenGLApp
 	float lastY = 600.0 / 2.0;
 
 	float deltaTime = 0.0f;
-	float lastFrame = 0.0f;		
+	float lastFrame = 0.0f;
 
 public:
 	void init()
@@ -118,7 +118,7 @@ public:
 		fs.erase();
 		vsLight.erase();
 		fsLight.erase();
-	}	
+	}
 
 	void startup()
 	{
@@ -127,61 +127,50 @@ public:
 		glfwSetScrollCallback(window, scroll_callback);
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-		static const GLfloat vertex_positions[] =
+		static const GLfloat vertices[] =
 		{
-			//z
-			-0.25f, -0.25f, -0.25f,//0
-			0.25f, -0.25f, -0.25f,//1
-			0.25f, 0.25f, -0.25f,//2
-			-0.25f, 0.25f, -0.25f,//3
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-			0.25f, -0.25f, -0.25f,//1
-			0.25f, -0.25f, 0.25f,//4
-			0.25f, 0.25f, 0.25f,//5
-			0.25f, 0.25f, -0.25f,//2
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
 
-			-0.25f, -0.25f, 0.25f,//7
-			-0.25f, -0.25f, -0.25f,//0
-			-0.25f, 0.25f, -0.25f,//3
-			-0.25f, 0.25f, 0.25f,//6
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-			0.25f, -0.25f, 0.25f,//4
-			-0.25f, -0.25f, 0.25f,//7
-			-0.25f, 0.25f, 0.25f,//6
-			0.25f, 0.25f, 0.25f,//5
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-			-0.25f, 0.25f, -0.25f,//3
-			0.25f, 0.25f, -0.25f,//2
-			0.25f, 0.25f, 0.25f,//5
-			-0.25f, 0.25f, 0.25f,//6
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-			-0.25f, -0.25f, -0.25f,//0
-			0.25f, -0.25f, -0.25f,//1
-			0.25f, -0.25f, 0.25f,//4
-			-0.25f, -0.25f, 0.25f,//7
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 		};
-
-		static const GLuint indices[] =
-		{
-			0, 1, 2,
-			2, 3, 0,
-
-			4, 5, 6,
-			6, 7, 4,
-
-			8, 9, 10,
-			10, 11, 8,
-
-			12, 13, 14,
-			14, 15, 12,
-
-			16, 17, 18,
-			18, 19, 16,
-
-			20, 21, 22,
-			22, 23, 20
-		};
-
 
 		vao.create();
 		vaoLight.create();
@@ -191,20 +180,17 @@ public:
 		vao.bind();
 
 		vertCoord.bind();
-		vertCoord.setvec3(vertex_positions, 24);
-		vao.setAttrib(0, 3, GL_FLOAT);
+		vertCoord.setvec3(vertices, sizeof(vertices));
+		vao.setAttrib(0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0);
 		vao.enable(0);
-		vertIndices.bind();
-		vertIndices.setIndices(indices, 36);
+		vao.setAttrib(1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+		vao.enable(1);
 
 		vaoLight.bind();
 
 		vertCoord.bind();
-		vertCoord.setvec3(vertex_positions, 24);
-		vao.setAttrib(0, 3, GL_FLOAT);
+		vao.setAttrib(0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0);
 		vao.enable(0);
-		vertIndices.bind();
-		vertIndices.setIndices(indices, 36);
 	}
 
 	void render(double currentTime)
@@ -230,30 +216,32 @@ public:
 			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 		model_matrix =
-			glm::translate(glm::mat4(1.0f), translate) *
-			glm::rotate(glm::mat4(1.0f), 2.0f * time, glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), 2.0f * time, glm::vec3(1.0f, 0.0f, 0.0f));
+			glm::translate(glm::mat4(1.0f), objectPos);
 
 		program.setVec4("objectColor", 1.0f, 0.5f, 0.31f, 1.0f);
 		program.setVec4("lightColor", 1.0f, 1.0f, 1.0f, 1.0f);
+		program.setVec4("lightPos", lightPos.x, lightPos.y, lightPos.z, 1.0f);
+		program.setVec4("viewPos", cameraPos.x, cameraPos.y, cameraPos.z, 1.0f);
 
 		program.setMat4("proj_matrix", 1, false, glm::value_ptr(proj_matrix));
 		program.setMat4("view_matrix", 1, false, glm::value_ptr(view_matrix));
 		program.setMat4("model_matrix", 1, false, glm::value_ptr(model_matrix));
 
 		vao.bind();
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		programLight.use();
 		model_matrix =
-			glm::translate(glm::mat4(1.0f), translate2);
+			glm::translate(glm::mat4(1.0f), lightPos);
+		model_matrix =
+			glm::scale(model_matrix, glm::vec3(0.75f));
 
 		programLight.setMat4("proj_matrix", 1, false, glm::value_ptr(proj_matrix));
 		programLight.setMat4("view_matrix", 1, false, glm::value_ptr(view_matrix));
 		programLight.setMat4("model_matrix", 1, false, glm::value_ptr(model_matrix));
 
 		vaoLight.bind();
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		this->onKeyUpdate();
 		if (useCursor)
@@ -264,7 +252,7 @@ public:
 	{
 
 		ImGui::Begin("OpenGLBase");
-		ImGui::SliderFloat3("Cube Translation", &translate.x, -3.0f, 3.0f);
+		ImGui::SliderFloat3("Cube Translation", &objectPos.x, -3.0f, 3.0f);
 
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 

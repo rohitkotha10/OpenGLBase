@@ -17,9 +17,9 @@ namespace OpenGLBase
 		glBindVertexArray(0);
 	}
 
-	void VertexArray::setAttrib(GLuint destination, GLint size, GLenum type)
+	void VertexArray::setAttrib(GLuint destination, GLint size, GLenum type, GLsizei stride, const void* pointer)
 	{
-		glVertexAttribPointer(destination, size, type, GL_FALSE, 0, NULL);
+		glVertexAttribPointer(destination, size, type, GL_FALSE, stride, pointer);
 	}
 
 	void VertexArray::enable(GLuint destination)
