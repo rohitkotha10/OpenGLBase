@@ -58,4 +58,9 @@ namespace OpenGLBase
 		glUniform4f(glGetUniformLocation(this->data, name.c_str()), x, y, z, w);
 	}
 
+	void Program::setTexture(std::string name, int destination)
+	{
+		glUniform1i(glGetUniformLocation(this->data, name.c_str()), destination);
+	}
+
 }

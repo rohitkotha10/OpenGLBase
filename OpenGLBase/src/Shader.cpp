@@ -37,7 +37,7 @@ namespace OpenGLBase
 		if (!success)
 		{
 			glGetShaderInfoLog(this->data, 512, NULL, infoLog);
-			std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+			std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
 		}
 	}
 	void Shader::erase()

@@ -8,18 +8,6 @@
 
 namespace OpenGLBase
 {
-	void flipTexture(bool flag);
-
-	enum TextureType
-	{
-		TEX2D = GL_TEXTURE_2D
-	};
-
-	enum TexDestination
-	{
-		TEX0 = GL_TEXTURE0, TEX1 = GL_TEXTURE1, TEX2 = GL_TEXTURE2, TEX3 = GL_TEXTURE3
-	};
-
 	class Texture
 	{
 		GLuint data;
@@ -30,8 +18,8 @@ namespace OpenGLBase
 		void create();
 		void bind();
 		void unbind();
-		void setTexture(std::string path);
-		void activate(TexDestination destination);
+		void setTexture(std::string path, bool flip);
+		void active(GLenum destination);
 		void erase();
 	};
 }

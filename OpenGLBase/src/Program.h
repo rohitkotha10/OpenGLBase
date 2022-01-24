@@ -20,6 +20,7 @@ namespace OpenGLBase
 		void setBool(std::string name, bool value);
 		void setMat4(std::string name, int count, bool transpose, float* data);
 		void setVec4(std::string name, float x, float y, float z, float w);
+		void setTexture(std::string name, int destination);
 	};
 }
 
