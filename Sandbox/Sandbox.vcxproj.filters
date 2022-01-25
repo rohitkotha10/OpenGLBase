@@ -20,6 +20,8 @@
     <None Include="imgui.ini" />
     <None Include="res\shaders\vsLight.shader" />
     <None Include="res\shaders\fsLight.shader" />
+    <None Include="res\shaders\vsback.shader" />
+    <None Include="res\shaders\fsback.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SandboxEntry.cpp">

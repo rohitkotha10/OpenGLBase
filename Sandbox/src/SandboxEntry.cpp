@@ -1,6 +1,112 @@
 #include "OpenGLBase.h"
+#include <vector>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 using namespace OpenGLBase;
+
+struct Vertex
+{
+	glm::vec3 position;
+	glm::vec3 normal;
+	glm::vec2 texCoords;
+};
+
+class Mesh
+{
+public:
+	std::vector<Vertex> vertices;
+	std::vector<unsigned int> indices;
+	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices)
+	{
+
+		this->vertices = vertices;
+		this->indices = indices;
+	}
+
+private:
+	unsigned int VAO, VBO, EBO;
+};
+
+class Model
+{
+public:
+	Model(std::string path)
+	{
+		loadModel(path);
+	}
+	std::vector<Mesh> meshes;
+	std::string directory;
+	void loadModel(std::string path)
+	{
+		Assimp::Importer import;
+		const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+
+		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+		{
+			std::cout << "ERROR::ASSIMP::" << import.GetErrorString() << std::endl;
+			return;
+		}
+		directory = path.substr(0, path.find_last_of('/'));
+		processNode(scene->mRootNode, scene);
+	}
+
+	void processNode(aiNode* node, const aiScene* scene)
+	{
+		for (int i = 0; i < node->mNumMeshes; i++)
+		{
+			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+			meshes.push_back(processMesh(mesh, scene));
+		}
+
+		for (int i = 0; i < node->mNumChildren; i++)
+		{
+			processNode(node->mChildren[i], scene);
+		}
+	}
+
+	Mesh processMesh(aiMesh* mesh, const aiScene* scene)
+	{
+		std::vector<Vertex> vertices;
+		std::vector<unsigned int> indices;
+
+		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+		{
+			Vertex vertex;
+			glm::vec3 vector;
+			vector.x = mesh->mVertices[i].x;
+			vector.y = mesh->mVertices[i].y;
+			vector.z = mesh->mVertices[i].z;
+			vertex.position = vector;
+
+			vector.x = mesh->mNormals[i].x;
+			vector.y = mesh->mNormals[i].y;
+			vector.z = mesh->mNormals[i].z;
+			vertex.normal = vector;
+
+			if (mesh->mTextureCoords[0])
+			{
+				glm::vec2 vec;
+				vec.x = mesh->mTextureCoords[0][i].x;
+				vec.y = mesh->mTextureCoords[0][i].y;
+				vertex.texCoords = vec;
+			}
+			else
+				vertex.texCoords = glm::vec2(0.0f, 0.0f);
+			vertices.push_back(vertex);
+		}
+
+		for (int i = 0; i < mesh->mNumFaces; i++)
+		{
+			aiFace face = mesh->mFaces[i];
+			for (unsigned int j = 0; j < face.mNumIndices; j++)
+				indices.push_back(face.mIndices[j]);
+		}
+
+		return Mesh(vertices, indices);
+	}
+};
 
 bool useCursor = true;
 bool firstMouse = true;
@@ -88,21 +194,28 @@ class my_app : public OpenGLApp
 {
 	Program program;
 	Program programLight;
+	Program backProg;
 
 	VertexArray vao;
 	VertexArray vaoLight;
+	VertexArray backvao;
 
 	VertexBuffer vertCoord;
 	IndexBuffer vertIndices;
+	VertexBuffer back;
+	IndexBuffer backInd;
 
 	Texture tex0;
 	Texture tex1;
 
+	int size;
+
 	glm::mat4 proj_matrix = glm::mat4(1.0f);
 	glm::mat4 view_matrix = glm::mat4(1.0f);
 	glm::mat4 model_matrix = glm::mat4(1.0f);
-	glm::vec3 objectPos = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 objectPos = glm::vec3(0.0f, 0.0f, 50.0f);
 	glm::vec3 lightPos = glm::vec3(-1.0f, 0.2f, 10.0f);
+	glm::vec3 backPos = glm::vec3(0.0f, 0.0f, 0.0f);
 
 public:
 	void init()
@@ -120,6 +233,8 @@ public:
 		Shader fs;
 		Shader vsLight;
 		Shader fsLight;
+		Shader vsback;
+		Shader fsback;
 
 		vs.create(VERTEX);
 		vs.source("res/shaders/vs.shader");
@@ -141,6 +256,16 @@ public:
 		fsLight.compile();
 		fsLight.debug();
 
+		vsback.create(VERTEX);
+		vsback.source("res/shaders/vsback.shader");
+		vsback.compile();
+		vsback.debug();
+
+		fsback.create(FRAGMENT);
+		fsback.source("res/shaders/fsback.shader");
+		fsback.compile();
+		fsback.debug();
+
 		program.create();
 		program.attach(vs);
 		program.attach(fs);
@@ -152,6 +277,12 @@ public:
 		programLight.attach(fsLight);
 		programLight.link();
 		programLight.debug();
+
+		backProg.create();
+		backProg.attach(vsback);
+		backProg.attach(fsback);
+		backProg.link();
+		backProg.debug();
 
 		vs.erase();
 		fs.erase();
@@ -212,10 +343,39 @@ public:
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f
 		};
 
+		Model check("res/media/backpack.obj");
+		int ver = 0;
+		int indi = 0;
+		std::cout << "MESH SIZE " << check.meshes.size() << std::endl;
+		static std::vector<float> backarr;
+		static std::vector<unsigned int> backarrInd;
+		for (int i = 0; i < check.meshes.size(); i++)
+		{
+			ver += check.meshes[i].vertices.size();
+			indi += check.meshes[i].indices.size();
+
+			for (int j = 0; j < check.meshes[i].vertices.size(); j++)
+			{
+				backarr.push_back(check.meshes[i].vertices[j].position.x);
+				backarr.push_back(check.meshes[i].vertices[j].position.y);
+				backarr.push_back(check.meshes[i].vertices[j].position.z);
+			}
+			for (int j = 0; j < check.meshes[i].indices.size(); j++)
+			{
+				backarrInd.push_back(check.meshes[i].indices[i]);
+			}
+		}
+		size = ver;
+
+		std::cout << "VER: " << ver << " INDI " << indi << std::endl;
+
 		vao.create();
 		vaoLight.create();
+		backvao.create();
 		vertCoord.create();
 		vertIndices.create();
+		back.create();
+		backInd.create();
 		tex0.create();
 		tex1.create();
 
@@ -246,6 +406,34 @@ public:
 		vertCoord.bind();
 		vao.setAttrib(0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
 		vao.enable(0);
+
+		backvao.bind();
+
+		back.bind();
+		glBufferData(GL_ARRAY_BUFFER, backarr.size() * sizeof(float), &backarr[0], GL_STATIC_DRAW);
+
+		backvao.setAttrib(0, 3, GL_FLOAT, 0, NULL);
+		backvao.enable(0);
+		std::cout << backarrInd.size() << std::endl;
+
+		backInd.bind();
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, backarrInd.size() * sizeof(unsigned int),
+			&backarrInd[0], GL_STATIC_DRAW);
+		int cnt = 0;
+		for (auto i : backarr)
+		{
+			cnt++;
+			std::cout << i << ' ';
+			if (cnt % 3 == 0) {
+				std::cout << std::endl;
+			}
+
+			if (cnt == 9)
+				break;
+		}
+
+		/*for (auto i : backarrInd)
+			std::cout << i << ' ';*/
 	}
 
 	void render(double currentTime)
@@ -262,14 +450,13 @@ public:
 
 		float aspect = (float)info.width / (float)info.height;
 
-		program.use();
-
 		proj_matrix =
 			glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
 
 		view_matrix =
 			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
+		program.use();
 		model_matrix =
 			glm::translate(glm::mat4(1.0f), objectPos);
 
@@ -287,7 +474,6 @@ public:
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		programLight.use();
-
 		model_matrix =
 			glm::translate(glm::mat4(1.0f), lightPos);
 		model_matrix =
@@ -299,6 +485,17 @@ public:
 
 		vaoLight.bind();
 		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		backProg.use();
+		model_matrix =
+			glm::translate(glm::mat4(1.0f), backPos);
+
+		backProg.setMat4("proj_matrix", 1, false, glm::value_ptr(proj_matrix));
+		backProg.setMat4("view_matrix", 1, false, glm::value_ptr(view_matrix));
+		backProg.setMat4("model_matrix", 1, false, glm::value_ptr(model_matrix));
+
+		backvao.bind();
+		glDrawArrays(GL_TRIANGLES, 0, size);
 
 		this->onKeyUpdate();
 	}
