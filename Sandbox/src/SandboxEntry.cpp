@@ -1,4 +1,8 @@
 #include "OpenGLBase.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <vector>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -18,15 +22,8 @@ class Mesh
 public:
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
-	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices)
-	{
-
-		this->vertices = vertices;
-		this->indices = indices;
-	}
-
-private:
-	unsigned int VAO, VBO, EBO;
+	Mesh(std::vector<Vertex> vert, std::vector<unsigned int> ind)
+		:vertices(vert), indices(ind) {};
 };
 
 class Model
@@ -34,33 +31,28 @@ class Model
 public:
 	Model(std::string path)
 	{
-		loadModel(path);
-	}
-	std::vector<Mesh> meshes;
-	std::string directory;
-	void loadModel(std::string path)
-	{
 		Assimp::Importer import;
 		const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
-			std::cout << "ERROR::ASSIMP::" << import.GetErrorString() << std::endl;
+			std::cout << "ASSIMP Import Error" << import.GetErrorString() << std::endl;
 			return;
 		}
-		directory = path.substr(0, path.find_last_of('/'));
 		processNode(scene->mRootNode, scene);
-	}
+	};
+	
+	std::vector<Mesh> meshes;
 
 	void processNode(aiNode* node, const aiScene* scene)
 	{
-		for (int i = 0; i < node->mNumMeshes; i++)
+		for (unsigned int i = 0; i < node->mNumMeshes; i++)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 			meshes.push_back(processMesh(mesh, scene));
 		}
 
-		for (int i = 0; i < node->mNumChildren; i++)
+		for (unsigned int i = 0; i < node->mNumChildren; i++)
 		{
 			processNode(node->mChildren[i], scene);
 		}
@@ -97,7 +89,7 @@ public:
 			vertices.push_back(vertex);
 		}
 
-		for (int i = 0; i < mesh->mNumFaces; i++)
+		for (unsigned int i = 0; i < mesh->mNumFaces; i++)
 		{
 			aiFace face = mesh->mFaces[i];
 			for (unsigned int j = 0; j < face.mNumIndices; j++)
@@ -111,15 +103,12 @@ public:
 bool useCursor = true;
 bool firstMouse = true;
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
 float yaw = -90.0f;//horizontal
-float pitch = 0.0f;//vertical
+float pitch = -0.0f;//vertical
+float fov = 45.0f;
+
 float lastX = 800.0f / 2.0;
 float lastY = 600.0 / 2.0;
-float fov = 45.0f;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -158,17 +147,18 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (useCursor == false)
 		return;
+
 	if (firstMouse)
 	{
-		lastX = xpos;
-		lastY = ypos;
+		lastX = (float)xpos;
+		lastY = (float)ypos;
 		firstMouse = false;
 	}
 
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos;
-	lastX = xpos;
-	lastY = ypos;
+	float xoffset = (float)xpos - lastX;
+	float yoffset = lastY - (float)ypos;
+	lastX = (float)xpos;
+	lastY = (float)ypos;
 
 	float sensitivity = 0.1f;
 	xoffset *= sensitivity;
@@ -182,12 +172,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	if (pitch < -89.0f)
 		pitch = -89.0f;
 	//prevents flipping when out of bounds
-
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	direction.y = sin(glm::radians(pitch));
-	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraFront = glm::normalize(direction);
 };
 
 class my_app : public OpenGLApp
@@ -205,25 +189,31 @@ class my_app : public OpenGLApp
 	VertexBuffer back;
 	IndexBuffer backInd;
 
-	Texture tex0;
-	Texture tex1;
-
-	int size;
+	Texture texDiff;
+	Texture texSpec;
 
 	glm::mat4 proj_matrix = glm::mat4(1.0f);
 	glm::mat4 view_matrix = glm::mat4(1.0f);
 	glm::mat4 model_matrix = glm::mat4(1.0f);
-	glm::vec3 objectPos = glm::vec3(0.0f, 0.0f, 50.0f);
-	glm::vec3 lightPos = glm::vec3(-1.0f, 0.2f, 10.0f);
+	glm::vec3 objectPos = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
 	glm::vec3 backPos = glm::vec3(0.0f, 0.0f, 0.0f);
 
+	glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+	glm::vec3 cameraFront;
+	glm::vec3 cameraUp;
+	glm::vec3 cameraRight;
+
+	int size;
 public:
 	void init()
 	{
-		info.width = 1280;
-		info.height = 720;
+		info.width = 800;
+		info.height = 600;
 		info.title = "OpenGLBase";
-		info.color = new float[4]{ 0.25f, 0.35f, 0.35f, 1.0f };
+		info.color = new float[4]{ 0.1f, 0.1f, 0.1f, 1.0f };
 		info.fullscreen = 0;
 	}
 
@@ -343,41 +333,35 @@ public:
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f
 		};
 
-		Model check("res/media/backpack.obj");
-		int ver = 0;
-		int indi = 0;
-		std::cout << "MESH SIZE " << check.meshes.size() << std::endl;
-		static std::vector<float> backarr;
-		static std::vector<unsigned int> backarrInd;
-		for (int i = 0; i < check.meshes.size(); i++)
-		{
-			ver += check.meshes[i].vertices.size();
-			indi += check.meshes[i].indices.size();
+		//Model check("res/media/backpack.obj");
+		//int ver = 0;
+		//int indi = 0;
+		//static std::vector<float> backarr;
+		//static std::vector<unsigned int> backarrInd;
+		//for (int i = 0; i < check.meshes.size(); i++)
+		//{
+		//	ver += check.meshes[i].vertices.size();
+		//	indi += check.meshes[i].indices.size();
 
-			for (int j = 0; j < check.meshes[i].vertices.size(); j++)
-			{
-				backarr.push_back(check.meshes[i].vertices[j].position.x);
-				backarr.push_back(check.meshes[i].vertices[j].position.y);
-				backarr.push_back(check.meshes[i].vertices[j].position.z);
-			}
-			for (int j = 0; j < check.meshes[i].indices.size(); j++)
-			{
-				backarrInd.push_back(check.meshes[i].indices[i]);
-			}
-		}
-		size = ver;
-
-		std::cout << "VER: " << ver << " INDI " << indi << std::endl;
+		//	for (int j = 0; j < check.meshes[i].vertices.size(); j++)
+		//	{
+		//		backarr.push_back(check.meshes[i].vertices[j].position.x);
+		//		backarr.push_back(check.meshes[i].vertices[j].position.y);
+		//		backarr.push_back(check.meshes[i].vertices[j].position.z);
+		//	}
+		//	for (int j = 0; j < check.meshes[i].indices.size(); j++)
+		//	{
+		//		backarrInd.push_back(check.meshes[i].indices[i]);
+		//	}
+		//}
+		//size = ver;
 
 		vao.create();
 		vaoLight.create();
-		backvao.create();
 		vertCoord.create();
 		vertIndices.create();
-		back.create();
-		backInd.create();
-		tex0.create();
-		tex1.create();
+		texDiff.create();
+		texSpec.create();
 
 		vao.bind();
 
@@ -391,49 +375,21 @@ public:
 		vao.setAttrib(2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 		vao.enable(2);
 
-		tex0.bind();
-		tex0.setTexture("res/media/smile.jpg", true);
-		tex1.bind();
-		tex1.setTexture("res/media/wall.jpg", true);
+		texDiff.bind();
+		texDiff.setTexture("res/media/wood.jpg", true);
+		texSpec.bind();
+		texSpec.setTexture("res/media/woodspec.jpg", true);
 
-		tex0.active(GL_TEXTURE0);
-		tex0.bind();
-		tex1.active(GL_TEXTURE1);
-		tex1.bind();
+		texDiff.active(GL_TEXTURE0);
+		texDiff.bind();
+		texSpec.active(GL_TEXTURE1);
+		texSpec.bind();
 
 		vaoLight.bind();
 
 		vertCoord.bind();
 		vao.setAttrib(0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
 		vao.enable(0);
-
-		backvao.bind();
-
-		back.bind();
-		glBufferData(GL_ARRAY_BUFFER, backarr.size() * sizeof(float), &backarr[0], GL_STATIC_DRAW);
-
-		backvao.setAttrib(0, 3, GL_FLOAT, 0, NULL);
-		backvao.enable(0);
-		std::cout << backarrInd.size() << std::endl;
-
-		backInd.bind();
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, backarrInd.size() * sizeof(unsigned int),
-			&backarrInd[0], GL_STATIC_DRAW);
-		int cnt = 0;
-		for (auto i : backarr)
-		{
-			cnt++;
-			std::cout << i << ' ';
-			if (cnt % 3 == 0) {
-				std::cout << std::endl;
-			}
-
-			if (cnt == 9)
-				break;
-		}
-
-		/*for (auto i : backarrInd)
-			std::cout << i << ' ';*/
 	}
 
 	void render(double currentTime)
@@ -453,6 +409,15 @@ public:
 		proj_matrix =
 			glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
 
+		glm::vec3 direction;
+		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		direction.y = sin(glm::radians(pitch));
+		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
+		cameraFront = glm::normalize(direction);
+		cameraRight = glm::normalize(glm::cross(cameraFront, worldUp));
+		cameraUp = glm::normalize(glm::cross(cameraRight, cameraFront));
+
 		view_matrix =
 			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
@@ -460,15 +425,23 @@ public:
 		model_matrix =
 			glm::translate(glm::mat4(1.0f), objectPos);
 
-		program.setVec4("objectColor", 1.0f, 0.5f, 0.31f, 1.0f);
-		program.setVec4("lightColor", 1.0f, 1.0f, 1.0f, 1.0f);
-		program.setVec4("lightPos", lightPos.x, lightPos.y, lightPos.z, 1.0f);
-		program.setVec4("viewPos", cameraPos.x, cameraPos.y, cameraPos.z, 1.0f);
-		program.setTexture("texture0", 0);
-		program.setTexture("texture1", 1);
-		program.setMat4("proj_matrix", 1, false, glm::value_ptr(proj_matrix));
-		program.setMat4("view_matrix", 1, false, glm::value_ptr(view_matrix));
-		program.setMat4("model_matrix", 1, false, glm::value_ptr(model_matrix));
+		program.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+		program.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+
+		program.setVec3("light.position", lightPos);
+		program.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+		program.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+		program.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+		program.setTexture("material.diffuse", 0);
+		program.setTexture("material.specular", 1);
+		program.setFloat("material.shininess", 32.0f);
+
+		program.setVec3("viewPos", cameraPos);
+
+		program.setMat4("proj_matrix", proj_matrix);
+		program.setMat4("view_matrix", view_matrix);
+		program.setMat4("model_matrix", model_matrix);
 
 		vao.bind();
 		glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -477,25 +450,25 @@ public:
 		model_matrix =
 			glm::translate(glm::mat4(1.0f), lightPos);
 		model_matrix =
-			glm::scale(model_matrix, glm::vec3(0.25f));
+			glm::scale(model_matrix, glm::vec3(0.2f));
 
-		programLight.setMat4("proj_matrix", 1, false, glm::value_ptr(proj_matrix));
-		programLight.setMat4("view_matrix", 1, false, glm::value_ptr(view_matrix));
-		programLight.setMat4("model_matrix", 1, false, glm::value_ptr(model_matrix));
+		programLight.setMat4("proj_matrix", proj_matrix);
+		programLight.setMat4("view_matrix", view_matrix);
+		programLight.setMat4("model_matrix", model_matrix);
 
 		vaoLight.bind();
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		backProg.use();
-		model_matrix =
-			glm::translate(glm::mat4(1.0f), backPos);
+		//backProg.use();
+		//model_matrix =
+		//	glm::translate(glm::mat4(1.0f), backPos);
 
-		backProg.setMat4("proj_matrix", 1, false, glm::value_ptr(proj_matrix));
-		backProg.setMat4("view_matrix", 1, false, glm::value_ptr(view_matrix));
-		backProg.setMat4("model_matrix", 1, false, glm::value_ptr(model_matrix));
+		//backProg.setMat4("proj_matrix", 1, false, glm::value_ptr(proj_matrix));
+		//backProg.setMat4("view_matrix", 1, false, glm::value_ptr(view_matrix));
+		//backProg.setMat4("model_matrix", 1, false, glm::value_ptr(model_matrix));
 
-		backvao.bind();
-		glDrawArrays(GL_TRIANGLES, 0, size);
+		//backvao.bind();
+		//glDrawArrays(GL_TRIANGLES, 0, size);
 
 		this->onKeyUpdate();
 	}

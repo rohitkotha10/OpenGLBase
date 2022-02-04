@@ -1,6 +1,8 @@
 #pragma once
 #include "Shader.h"
 
+#include <glm/glm.hpp>
+
 namespace OpenGLBase
 {
 	class Program
@@ -18,8 +20,9 @@ namespace OpenGLBase
 		void setInt(std::string name, int value);
 		void setFloat(std::string name, float value);
 		void setBool(std::string name, bool value);
-		void setMat4(std::string name, int count, bool transpose, float* data);
-		void setVec4(std::string name, float x, float y, float z, float w);
+		void setMat4(std::string name, const glm::mat4& data);
+		void setVec3(std::string name, float x, float y, float z);
+		void setVec3(std::string name, const glm::vec3& data);
 		void setTexture(std::string name, int destination);
 	};
 }

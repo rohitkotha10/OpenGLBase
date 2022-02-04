@@ -49,13 +49,18 @@ namespace OpenGLBase
 	{
 		glUniform1i(glGetUniformLocation(this->data, name.c_str()), value);
 	}
-	void Program::setMat4(std::string name, int count, bool transpose, float* data)
+	void Program::setMat4(std::string name, const glm::mat4& data)
 	{
-		glUniformMatrix4fv(glGetUniformLocation(this->data, name.c_str()), count, transpose, data);
+		glUniformMatrix4fv(glGetUniformLocation(this->data, name.c_str()), 1, GL_FALSE, &data[0][0]);
 	}
-	void Program::setVec4(std::string name, float x, float y, float z, float w)
+	void Program::setVec3(std::string name, float x, float y, float z)
 	{
-		glUniform4f(glGetUniformLocation(this->data, name.c_str()), x, y, z, w);
+		glUniform3f(glGetUniformLocation(this->data, name.c_str()), x, y, z);
+	}
+
+	void Program::setVec3(std::string name, const glm::vec3& data)
+	{
+		glUniform3fv(glGetUniformLocation(this->data, name.c_str()), 1, &data[0]);
 	}
 
 	void Program::setTexture(std::string name, int destination)
