@@ -45,9 +45,10 @@ namespace OpenGLBase
 		vao.unbind();
 	}
 
-	void Scene::source(std::string path)
+	void Scene::source(std::string path, bool flipTexture)
 	{
 		Assimp::Importer import;
+		stbi_set_flip_vertically_on_load(flipTexture);
 		const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -157,7 +158,7 @@ namespace OpenGLBase
 				tex.bind();
 				std::string filename = std::string(str.C_Str());
 				filename = directory + '/' + filename;
-				tex.setTexture(filename, true);
+				tex.setTexture(filename);
 
 				texture.id = tex.getData();
 				texture.type = typeName;

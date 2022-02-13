@@ -59,7 +59,7 @@ namespace OpenGLBase
 	class Scene
 	{
 	public:
-		void source(std::string path);
+		void source(std::string path, bool flipTexture);
 		void drawScene(Program& program);
 		void processNode(aiNode* node, const aiScene* scene);
 		Mesh processMesh(aiMesh* mesh, const aiScene* scene);

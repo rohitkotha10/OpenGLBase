@@ -18,7 +18,7 @@ namespace OpenGLBase
 		void create();
 		void bind();
 		void unbind();
-		void setTexture(std::string path, bool flip);
+		void setTexture(std::string path);
 		void active(GLenum destination);
 		void erase();
 	};

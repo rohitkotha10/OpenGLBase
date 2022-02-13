@@ -90,11 +90,13 @@ class my_app : public OpenGLApp
 	IndexBuffer vertIndices;
 
 	Scene backpack;
+	Scene tv;
 
 	glm::mat4 proj_matrix = glm::mat4(1.0f);
 	glm::mat4 view_matrix = glm::mat4(1.0f);
 	glm::mat4 model_matrix = glm::mat4(1.0f);
 	glm::vec3 objectPos = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 tvPos = glm::vec3(2.0f, 0.0f, -2.0f);
 	glm::vec3 lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
 
 	glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -225,22 +227,8 @@ public:
 		vaoLight.setAttrib(0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
 		vaoLight.enable(0);
 
-		backpack.source("res/media/backpack/backpack.obj");
-		std::cout << backpack.directory << std::endl;
-		std::cout << backpack.meshes.size() << std::endl;
-		/*std::cout << backpack.meshes[0].vertices.size() << std::endl;
-		for (int i = 0; i < 36; i++)
-		{
-			std::cout << backpack.meshes[0].vertices[i].position.x << ' '
-				<< backpack.meshes[0].vertices[i].position.y << ' '
-				<< backpack.meshes[0].vertices[i].position.z << std::endl;
-		}
-
-		for (int i = 0; i < 36; i++)
-		{
-			std::cout << backpack.meshes[0].indices[i] << std::endl;
-		}
-		std::cout << backpack.meshes[0].indices.size() << std::endl;*/
+		tv.source("res/media/tv/retrotv0319.obj", false);
+		backpack.source("res/media/backpack/backpack.obj", true);
 	}
 
 	void render(double currentTime)
@@ -275,12 +263,20 @@ public:
 		program.use();
 		model_matrix =
 			glm::translate(glm::mat4(1.0f), objectPos);
+		model_matrix =
+			glm::scale(model_matrix, glm::vec3(0.1f));
 
 		program.setMat4("proj_matrix", proj_matrix);
 		program.setMat4("view_matrix", view_matrix);
 		program.setMat4("model_matrix", model_matrix);
-
+		
 		backpack.drawScene(program);
+
+		model_matrix =
+			glm::translate(glm::mat4(1.0f), tvPos);
+		program.setMat4("model_matrix", model_matrix);
+
+		tv.drawScene(program);
 
 		programLight.use();
 		model_matrix =
