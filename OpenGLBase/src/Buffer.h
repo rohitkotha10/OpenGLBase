@@ -12,8 +12,8 @@ namespace OpenGLBase
 		void create();
 		void bind();
 		void unbind();
-		void setvec3(const GLfloat* verts, GLsizeiptr size);
-		void setvec2(const GLfloat* verts, GLsizeiptr size);
+		void setvec3(const void* verts, GLsizeiptr size);
+		void setvec2(const void* verts, GLsizeiptr size);
 		void erase();
 
 	};
@@ -25,7 +25,7 @@ namespace OpenGLBase
 		void create();
 		void bind();
 		void unbind();
-		void setIndices(const GLuint* indices, GLsizeiptr size);
+		void setIndices(const void* indices, GLsizeiptr size);
 		void erase();
 
 	};

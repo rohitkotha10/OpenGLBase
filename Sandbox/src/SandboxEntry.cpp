@@ -84,16 +84,12 @@ class my_app : public OpenGLApp
 	Program program;
 	Program programLight;
 
-	VertexArray vao;
 	VertexArray vaoLight;
 
 	VertexBuffer vertCoord;
 	IndexBuffer vertIndices;
 
-	TexBuffer texDiff;
-	TexBuffer texSpec;
-
-	//Scene backpack;
+	Scene backpack;
 
 	glm::mat4 proj_matrix = glm::mat4(1.0f);
 	glm::mat4 view_matrix = glm::mat4(1.0f);
@@ -217,43 +213,34 @@ public:
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f
 		};
 
-		vao.create();
 		vaoLight.create();
 		vertCoord.create();
 		vertIndices.create();
-		texDiff.create();
-		texSpec.create();
-
-		vao.bind();
-
-		vertCoord.bind();
-		vertCoord.setvec3(vertices, sizeof(vertices));
-
-		vao.setAttrib(0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
-		vao.enable(0);
-		vao.setAttrib(1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-		vao.enable(1);
-		vao.setAttrib(2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-		vao.enable(2);
-
-		texDiff.bind();
-		texDiff.setTexture("res/media/wood.jpg", true);
-		texSpec.bind();
-		texSpec.setTexture("res/media/woodspec.jpg", true);
-
-		texDiff.active(GL_TEXTURE0);
-		texDiff.bind();
-		texSpec.active(GL_TEXTURE1);
-		texSpec.bind();
 
 		vaoLight.bind();
 
 		vertCoord.bind();
+		vertCoord.setvec3(vertices, sizeof(vertices));
 
 		vaoLight.setAttrib(0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
 		vaoLight.enable(0);
 
-		//backpack.source("back.obj");
+		backpack.source("res/media/backpack/backpack.obj");
+		std::cout << backpack.directory << std::endl;
+		std::cout << backpack.meshes.size() << std::endl;
+		/*std::cout << backpack.meshes[0].vertices.size() << std::endl;
+		for (int i = 0; i < 36; i++)
+		{
+			std::cout << backpack.meshes[0].vertices[i].position.x << ' '
+				<< backpack.meshes[0].vertices[i].position.y << ' '
+				<< backpack.meshes[0].vertices[i].position.z << std::endl;
+		}
+
+		for (int i = 0; i < 36; i++)
+		{
+			std::cout << backpack.meshes[0].indices[i] << std::endl;
+		}
+		std::cout << backpack.meshes[0].indices.size() << std::endl;*/
 	}
 
 	void render(double currentTime)
@@ -292,22 +279,8 @@ public:
 		program.setMat4("proj_matrix", proj_matrix);
 		program.setMat4("view_matrix", view_matrix);
 		program.setMat4("model_matrix", model_matrix);
-		program.setVec3("viewPos", cameraPos);
 
-		program.setVec3("light.position", lightPos);
-		program.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-		program.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-		program.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-
-		//backpack.drawScene(program);
-
-		program.setTexture("material.diffuse", 0);
-		program.setTexture("material.specular", 1);
-		program.setFloat("material.shininess", 32.0f);
-
-
-		vao.bind();
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		backpack.drawScene(program);
 
 		programLight.use();
 		model_matrix =
@@ -356,12 +329,9 @@ public:
 	{
 		program.erase();
 		programLight.erase();
-		vao.erase();
 		vaoLight.erase();
 		vertCoord.erase();
 		vertIndices.erase();
-		texDiff.erase();
-		texSpec.erase();
 	}
 
 };
