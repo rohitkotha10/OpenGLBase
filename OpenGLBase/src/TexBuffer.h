@@ -8,7 +8,7 @@
 
 namespace OpenGLBase
 {
-	class Texture
+	class TexBuffer
 	{
 		GLuint data;
 		unsigned char* texSource;

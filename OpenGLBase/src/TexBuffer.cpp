@@ -1,22 +1,22 @@
-#include "Texture.h"
+#include "TexBuffer.h"
 #include <iostream>
 
 namespace OpenGLBase
 {
-	void Texture::create()
+	void TexBuffer::create()
 	{
 		glGenTextures(1, &(this->data));
 	}
-	void Texture::bind()
+	void TexBuffer::bind()
 	{
 		glBindTexture(GL_TEXTURE_2D, this->data);
 	}
-	void Texture::unbind()
+	void TexBuffer::unbind()
 	{
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	void Texture::setTexture(std::string path, bool flip)
+	void TexBuffer::setTexture(std::string path, bool flip)
 	{
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -33,11 +33,11 @@ namespace OpenGLBase
 		
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
-	void Texture::active(GLenum destination)
+	void TexBuffer::active(GLenum destination)
 	{
 		glActiveTexture(destination);
 	}
-	void Texture::erase()
+	void TexBuffer::erase()
 	{
 		glDeleteTextures(1, &(this->data));
 	}

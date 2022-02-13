@@ -4,4 +4,5 @@
 #include "src/Program.h"
 #include "src/VertexArray.h"
 #include "src/Buffer.h"
-#include "src/Texture.h"
+#include "src/TexBuffer.h"
+#include "src/Scene.h"

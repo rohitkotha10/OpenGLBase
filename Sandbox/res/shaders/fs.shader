@@ -6,10 +6,7 @@ in vec2 texOut;
 
 out vec4 fragColor;
 
-uniform vec3 objectColor;
-uniform vec3 lightColor;
 uniform vec3 viewPos;
-uniform vec3 lightPos;
 
 struct Material
 {
