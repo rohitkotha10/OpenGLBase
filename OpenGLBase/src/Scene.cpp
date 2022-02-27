@@ -26,18 +26,22 @@ namespace OpenGLBase
 
 	void Mesh::drawMesh(Program& program)
 	{
-		int numDiff = 1;
-		int numSpec = 1;
+		int numDiff = 1;//3 max
+		int numSpec = 1;//3 max
 		for (int i = 0; i < textures.size(); i++)
 		{
-			glActiveTexture(GL_TEXTURE0 + i);
 			std::string number;
 			std::string name = textures[i].type;
 			if (name == "diffuse")
 				number = std::to_string(numDiff++);
+			else if (name == "specular")
+				number = std::to_string(numSpec++);
+
+			textures[i].data.active(i);
 			program.setTexture("material." + name + number, i);
-			glBindTexture(GL_TEXTURE_2D, textures[i].id);
 		}
+
+		program.setFloat("material.shininess", 32.0f);
 
 		vao.bind();
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
@@ -110,6 +114,7 @@ namespace OpenGLBase
 			}
 			else
 				vertex.texCoords = glm::vec2(0.0f, 0.0f);
+
 			vertices.push_back(vertex);
 		}
 
@@ -119,13 +124,20 @@ namespace OpenGLBase
 			for (unsigned int j = 0; j < face.mNumIndices; j++)
 				indices.push_back(face.mIndices[j]);
 		}
-
+		//1 material for each mesh
 		if (mesh->mMaterialIndex >= 0)
 		{
 			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-			std::vector<Texture> diffuseMaps = loadMaterialTextures(material,
-				aiTextureType_DIFFUSE, "diffuse");
-			textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+			std::vector<Texture> diffuseMaps = 
+				loadMaterialTextures(material, aiTextureType_DIFFUSE, "diffuse");
+			std::vector<Texture> specularMaps =
+				loadMaterialTextures(material, aiTextureType_SPECULAR, "specular");
+
+			for (int i = 0; i < diffuseMaps.size(); i++)
+				textures.push_back(diffuseMaps[i]);
+
+			for (int i = 0; i < specularMaps.size(); i++)
+				textures.push_back(specularMaps[i]);
 		}
 
 		return Mesh(vertices, indices, textures);
@@ -145,26 +157,25 @@ namespace OpenGLBase
 				if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)
 				{
 					textures.push_back(textures_loaded[j]);
-					skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
+					skip = true; //same path
 					break;
 				}
 			}
 			if (!skip)
 			{
 				Texture texture;
-				TexBuffer tex;
 
-				tex.create();
-				tex.bind();
+				texture.data.create();
+				texture.data.bind();
 				std::string filename = std::string(str.C_Str());
 				filename = directory + '/' + filename;
-				tex.setTexture(filename);
+				texture.data.setTexture(filename);
 
-				texture.id = tex.getData();
 				texture.type = typeName;
 				texture.path = str.C_Str();
-				textures.push_back(texture);
 				textures_loaded.push_back(texture);
+				std::cout << filename << std::endl;
+				textures.push_back(texture);
 			}
 		}
 		return textures;

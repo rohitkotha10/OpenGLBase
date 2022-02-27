@@ -4,7 +4,7 @@ namespace OpenGLBase
 {
 	void Shader::create(ShaderType type)
 	{
-		this->data = glCreateShader(type);
+		this->id = glCreateShader(type);
 	}
 	void Shader::source(std::string shaderPath)
 	{
@@ -20,28 +20,28 @@ namespace OpenGLBase
 			final += temp + '\n';
 		}
 		this->shaderSource = final.c_str();
-		glShaderSource(this->data, 1, &this->shaderSource, NULL);
+		glShaderSource(this->id, 1, &this->shaderSource, NULL);
 	}
 
 	void Shader::compile()
 	{
-		glCompileShader(this->data);
+		glCompileShader(this->id);
 	}
 
 	void Shader::debug()
 	{
 		int success;
 		char infoLog[512];
-		glGetShaderiv(this->data, GL_COMPILE_STATUS, &success);
+		glGetShaderiv(this->id, GL_COMPILE_STATUS, &success);
 
 		if (!success)
 		{
-			glGetShaderInfoLog(this->data, 512, NULL, infoLog);
+			glGetShaderInfoLog(this->id, 512, NULL, infoLog);
 			std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
 		}
 	}
 	void Shader::erase()
 	{
-		glDeleteShader(this->data);
+		glDeleteShader(this->id);
 	}
 }

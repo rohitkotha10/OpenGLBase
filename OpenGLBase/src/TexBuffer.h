@@ -10,16 +10,16 @@ namespace OpenGLBase
 {
 	class TexBuffer
 	{
-		GLuint data;
+		GLuint id;
 		unsigned char* texSource;
 		int width, height, nrChannels;
 	public:
-		GLuint getData() { return data; };
+		GLuint getId() { return id; };
 		void create();
 		void bind();
 		void unbind();
 		void setTexture(std::string path);
-		void active(GLenum destination);
+		void active(int destination);
 		void erase();
 	};
 }

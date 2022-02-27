@@ -12,7 +12,7 @@
 #include "./Program.h"
 #include "./VertexArray.h"
 #include "./TexBuffer.h"
-#include "./BUffer.h"
+#include "./Buffer.h"
 
 namespace OpenGLBase
 {
@@ -25,9 +25,9 @@ namespace OpenGLBase
 
 	struct Texture
 	{
-		unsigned int id;
+		TexBuffer data;
 		std::string type;
-		std::string path;
+		std::string path;//relative to model directory
 	};
 
 	class Mesh
@@ -37,23 +37,21 @@ namespace OpenGLBase
 			:vertices(vert), indices(ind), textures(texs) {
 			setupMesh();
 		};
+		
+		void setupMesh();
+		void drawMesh(Program& program);
+
+	private:
+		//Mesh* next;
+		//Mesh** children;
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
 		std::vector<Texture> textures;
-		void setupMesh();
-		void drawMesh(Program& program);
-	private:
+
 		VertexArray vao;
 		VertexBuffer vbo;
 		IndexBuffer ebo;
 
-	};
-
-	class Model
-	{
-	public:
-		std::vector<int> meshIndices;
-		Model* children;
 	};
 
 	class Scene
@@ -61,14 +59,15 @@ namespace OpenGLBase
 	public:
 		void source(std::string path, bool flipTexture);
 		void drawScene(Program& program);
+		
+	private:
 		void processNode(aiNode* node, const aiScene* scene);
 		Mesh processMesh(aiMesh* mesh, const aiScene* scene);
-		int numMeshes = 0;
-		int numMaterials = 0;
+
 		std::vector<Mesh> meshes;
+		//Mesh* rootMesh;
 		std::vector<Texture> textures_loaded;
 		std::vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
-		Model* rootNode;
 		std::string directory;
 	};
 }

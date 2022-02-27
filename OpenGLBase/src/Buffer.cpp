@@ -4,12 +4,12 @@ namespace OpenGLBase
 {
 	void VertexBuffer::create()
 	{
-		glGenBuffers(1, &(this->data));
+		glGenBuffers(1, &(this->id));
 	}
 
 	void VertexBuffer::bind()
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, this->data);
+		glBindBuffer(GL_ARRAY_BUFFER, this->id);
 	}
 	void VertexBuffer::unbind()
 	{
@@ -25,16 +25,16 @@ namespace OpenGLBase
 	}
 	void VertexBuffer::erase()
 	{
-		glDeleteBuffers(1, &(this->data));
+		glDeleteBuffers(1, &(this->id));
 	}
 
 	void IndexBuffer::create()
 	{
-		glGenBuffers(1, &(this->data));
+		glGenBuffers(1, &(this->id));
 	}
 	void IndexBuffer::bind()
 	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->data);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->id);
 	}
 	void IndexBuffer::unbind()
 	{
@@ -46,6 +46,6 @@ namespace OpenGLBase
 	}
 	void IndexBuffer::erase()
 	{
-		glDeleteBuffers(1, &(this->data));
+		glDeleteBuffers(1, &(this->id));
 	}
 }

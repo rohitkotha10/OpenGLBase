@@ -4,12 +4,12 @@ namespace OpenGLBase
 {
 	void VertexArray::create()
 	{
-		glGenVertexArrays(1, &(this->data));
+		glGenVertexArrays(1, &(this->id));
 	}
 
 	void VertexArray::bind()
 	{
-		glBindVertexArray(this->data);
+		glBindVertexArray(this->id);
 	}
 
 	void VertexArray::unbind()
@@ -29,6 +29,6 @@ namespace OpenGLBase
 
 	void VertexArray::erase()
 	{
-		glDeleteVertexArrays(1, &(this->data));
+		glDeleteVertexArrays(1, &(this->id));
 	}
 }

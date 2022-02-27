@@ -8,7 +8,7 @@ namespace OpenGLBase
 	class VertexBuffer
 	{
 	public:
-		GLuint data;
+		GLuint id;
 		void create();
 		void bind();
 		void unbind();
@@ -21,7 +21,7 @@ namespace OpenGLBase
 	class IndexBuffer
 	{
 	public:
-		GLuint data;
+		GLuint id;
 		void create();
 		void bind();
 		void unbind();

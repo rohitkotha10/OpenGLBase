@@ -5,7 +5,8 @@
 
 using namespace OpenGLBase;
 
-bool useCursor = true;
+int curImguiWindow = 0;
+bool hideCursor = true;
 bool firstMouse = true;
 
 float yaw = -90.0f;//horizontal
@@ -24,15 +25,15 @@ void  keyboard_callback(GLFWwindow* window, int key, int scancode, int action, i
 		glfwSetWindowShouldClose(window, true);
 	if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
 	{
-		if (useCursor)
+		if (hideCursor)
 		{
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-			useCursor = !useCursor;
+			hideCursor = !hideCursor;
 		}
 		else
 		{
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-			useCursor = !useCursor;
+			hideCursor = !hideCursor;
 		}
 
 		firstMouse = true;
@@ -41,6 +42,9 @@ void  keyboard_callback(GLFWwindow* window, int key, int scancode, int action, i
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
+	if (hideCursor == false)
+		return;
+
 	fov -= (float)yoffset;
 	if (fov < 1.0f)
 		fov = 1.0f;
@@ -50,7 +54,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-	if (useCursor == false)
+	if (hideCursor == false)
 		return;
 
 	if (firstMouse)
@@ -81,7 +85,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 class my_app : public OpenGLApp
 {
-	Program program;
+	Program programTv;
+	Program programBackpack;
 	Program programLight;
 
 	VertexArray vaoLight;
@@ -95,9 +100,18 @@ class my_app : public OpenGLApp
 	glm::mat4 proj_matrix = glm::mat4(1.0f);
 	glm::mat4 view_matrix = glm::mat4(1.0f);
 	glm::mat4 model_matrix = glm::mat4(1.0f);
-	glm::vec3 objectPos = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 tvPos = glm::vec3(2.0f, 0.0f, -2.0f);
-	glm::vec3 lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
+
+	glm::vec3 backpackPos = glm::vec3(10.0f, 0.0f, 0.0f);
+	glm::vec3 backpackScale = glm::vec3(0.2f);
+
+	glm::vec3 tvPos = glm::vec3(0.0f, -0.5f, 0.0f);
+	glm::vec3 tvScale = glm::vec3(1.0f);
+
+	glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
+	glm::vec3 lightScale = glm::vec3(0.2f);
+	float lightAmbient = 0.2f;
+	float lightDiffuse = 0.5f;
+	float lightSpecular = 1.0f;
 
 	glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -106,12 +120,11 @@ class my_app : public OpenGLApp
 	glm::vec3 cameraUp;
 	glm::vec3 cameraRight;
 
-	int size;
 public:
 	void init()
 	{
-		info.width = 800;
-		info.height = 600;
+		info.width = 1920;
+		info.height = 1080;
 		info.title = "OpenGLBase";
 		info.color = new float[4]{ 0.1f, 0.1f, 0.1f, 1.0f };
 		info.fullscreen = false;
@@ -144,11 +157,17 @@ public:
 		fsLight.compile();
 		fsLight.debug();
 
-		program.create();
-		program.attach(vs);
-		program.attach(fs);
-		program.link();
-		program.debug();
+		programTv.create();
+		programTv.attach(vs);
+		programTv.attach(fs);
+		programTv.link();
+		programTv.debug();
+
+		programBackpack.create();
+		programBackpack.attach(vs);
+		programBackpack.attach(fs);
+		programBackpack.link();
+		programBackpack.debug();
 
 		programLight.create();
 		programLight.attach(vsLight);
@@ -227,8 +246,8 @@ public:
 		vaoLight.setAttrib(0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
 		vaoLight.enable(0);
 
-		tv.source("res/media/tv/retrotv0319.obj", false);
 		backpack.source("res/media/backpack/backpack.obj", true);
+		tv.source("res/media/tv/retrotv0319.obj", false);
 	}
 
 	void render(double currentTime)
@@ -260,29 +279,47 @@ public:
 		view_matrix =
 			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-		program.use();
-		model_matrix =
-			glm::translate(glm::mat4(1.0f), objectPos);
-		model_matrix =
-			glm::scale(model_matrix, glm::vec3(0.1f));
-
-		program.setMat4("proj_matrix", proj_matrix);
-		program.setMat4("view_matrix", view_matrix);
-		program.setMat4("model_matrix", model_matrix);
-		
-		backpack.drawScene(program);
+		programTv.use();
+		programTv.setMat4("proj_matrix", proj_matrix);
+		programTv.setMat4("view_matrix", view_matrix);
+		programTv.setVec3("viewPos", cameraPos);
+		programTv.setVec3("light.position", lightPos);
+		programTv.setFloat("light.ambient", lightAmbient);
+		programTv.setFloat("light.diffuse", lightDiffuse);
+		programTv.setFloat("light.specular", lightSpecular);
 
 		model_matrix =
 			glm::translate(glm::mat4(1.0f), tvPos);
-		program.setMat4("model_matrix", model_matrix);
+		model_matrix =
+			glm::scale(model_matrix, tvScale);
+		programTv.setMat4("model_matrix", model_matrix);
 
-		tv.drawScene(program);
+		tv.drawScene(programTv);
+
+		programBackpack.use();
+		programBackpack.setMat4("proj_matrix", proj_matrix);
+		programBackpack.setMat4("view_matrix", view_matrix);
+		programBackpack.setVec3("viewPos", cameraPos);
+		programBackpack.setVec3("light.position", lightPos);
+		programBackpack.setFloat("light.ambient", lightAmbient);
+		programBackpack.setFloat("light.diffuse", lightDiffuse);
+		programBackpack.setFloat("light.specular", lightSpecular);
+
+		model_matrix =
+			glm::translate(glm::mat4(1.0f), backpackPos);
+		model_matrix =
+			glm::scale(model_matrix, backpackScale);
+		programBackpack.setMat4("model_matrix", model_matrix);
+
+		backpack.drawScene(programBackpack);
+
+
 
 		programLight.use();
 		model_matrix =
 			glm::translate(glm::mat4(1.0f), lightPos);
 		model_matrix =
-			glm::scale(model_matrix, glm::vec3(0.2f));
+			glm::scale(model_matrix, lightScale);
 
 		programLight.setMat4("proj_matrix", proj_matrix);
 		programLight.setMat4("view_matrix", view_matrix);
@@ -291,19 +328,61 @@ public:
 		vaoLight.bind();
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		this->onKeyUpdate();
+		if (hideCursor)
+			this->onKeyUpdate();
 	}
 
 	void imguiRender(double currentTime)
 	{
+		if (hideCursor)
+			return;
 
 		ImGui::Begin("OpenGLBase");
-		ImGui::SliderFloat3("Cube Translation", &objectPos.x, -3.0f, 3.0f);
+		switch (curImguiWindow)
+		{
+		case 0:
+		{
+			if (ImGui::Button("Light Settings"))
+				curImguiWindow = 1;
+			if (ImGui::Button("TV Settings"))
+				curImguiWindow = 2;
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::Text("Press Left Ctrl to Enable/Disable Cursor");
+			if (hideCursor)
+				ImGui::Text("Cursor Enabled");
+			ImGui::Text("Press Escape to Exit");
+			break;
+		}
 
-		ImGui::Text("Press Left Ctrl to Enable/Disable Cursor");
-		ImGui::Text("Press Escape to Exit");
+		case 1:
+		{
+			if (ImGui::Button("<-"))
+				curImguiWindow = 0;
+
+			ImGui::SliderFloat3("Light Translation", &lightPos.x, -30.0f, 30.0f);
+			ImGui::SliderFloat("Ambient Strength", &lightAmbient, 0.1f, 10.0f);
+			ImGui::SliderFloat("Diffuse Strength", &lightDiffuse, 0.1f, 10.0f);
+			ImGui::SliderFloat("Specular Strength", &lightSpecular, 0.1f, 10.0f);
+			break;
+		}
+
+		case 2:
+		{
+			if (ImGui::Button("Home"))
+				curImguiWindow = 0;
+
+			static float colorTest[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			ImGui::ColorEdit4("Clear Color", colorTest);
+
+			if (ImGui::Button("Print Colors"))
+				std::cout << colorTest[0] << ' ' << colorTest[1] << ' ' << colorTest[2] << ' ' << colorTest[3] << std::endl;
+			break;
+		}
+
+		default:
+			break;
+		}
 		ImGui::End();
 	}
 
@@ -323,7 +402,8 @@ public:
 
 	void shutdown()
 	{
-		program.erase();
+		programTv.erase();
+		programBackpack.erase();
 		programLight.erase();
 		vaoLight.erase();
 		vertCoord.erase();

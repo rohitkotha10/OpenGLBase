@@ -5,11 +5,11 @@ namespace OpenGLBase
 {
 	void TexBuffer::create()
 	{
-		glGenTextures(1, &(this->data));
+		glGenTextures(1, &(this->id));
 	}
 	void TexBuffer::bind()
 	{
-		glBindTexture(GL_TEXTURE_2D, this->data);
+		glBindTexture(GL_TEXTURE_2D, this->id);
 	}
 	void TexBuffer::unbind()
 	{
@@ -31,14 +31,16 @@ namespace OpenGLBase
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, this->texSource);
 		
 		glGenerateMipmap(GL_TEXTURE_2D);
+		stbi_image_free(this->texSource);
 	}
 
-	void TexBuffer::active(GLenum destination)
+	void TexBuffer::active(int destination)
 	{
-		glActiveTexture(destination);
+		glActiveTexture(GL_TEXTURE0 + destination);
+		this->bind();
 	}
 	void TexBuffer::erase()
 	{
-		glDeleteTextures(1, &(this->data));
+		glDeleteTextures(1, &(this->id));
 	}
 }

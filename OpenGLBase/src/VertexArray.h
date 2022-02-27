@@ -7,9 +7,9 @@ namespace OpenGLBase
 {
 	class VertexArray
 	{
-		GLuint data;
+		GLuint id;
 	public:
-		GLuint getData() { return data; };
+		GLuint getId() { return id; };
 		void create();
 		void bind();
 		void unbind();
