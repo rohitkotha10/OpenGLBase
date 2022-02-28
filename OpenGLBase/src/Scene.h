@@ -34,16 +34,15 @@ namespace OpenGLBase
 	{
 	public:
 		Mesh(std::vector<Vertex> vert, std::vector<unsigned int> ind, std::vector<Texture> texs)
-			:vertices(vert), indices(ind), textures(texs) {
+			:vertices(vert), indices(ind), textures(texs), next(nullptr) {
 			setupMesh();
 		};
-		
+
 		void setupMesh();
 		void drawMesh(Program& program);
+		Mesh* next;
 
 	private:
-		//Mesh* next;
-		//Mesh** children;
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
 		std::vector<Texture> textures;
@@ -54,18 +53,35 @@ namespace OpenGLBase
 
 	};
 
+	class MeshList
+	{
+	public:
+		MeshList()
+			:head(nullptr), next(nullptr), childrenRootNode(nullptr), numMeshes(0) {};
+		void add(Mesh newMesh);
+		MeshList* next;
+		MeshList* childrenRootNode;
+		int numMeshes;
+
+		Mesh* head;
+	};
+
 	class Scene
 	{
 	public:
+		Scene()
+			:rootStart(nullptr), numMeshes(0) {};
 		void source(std::string path, bool flipTexture);
 		void drawScene(Program& program);
-		
+
 	private:
-		void processNode(aiNode* node, const aiScene* scene);
+		void drawChilds(Program& program, MeshList* cur);
+		void processNode(aiNode* node, const aiScene* scene, MeshList* cur);
 		Mesh processMesh(aiMesh* mesh, const aiScene* scene);
+		int numMeshes;
 
 		std::vector<Mesh> meshes;
-		//Mesh* rootMesh;
+		MeshList* rootStart;
 		std::vector<Texture> textures_loaded;
 		std::vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 		std::string directory;
