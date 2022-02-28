@@ -42,7 +42,7 @@ namespace OpenGLBase
 		void drawMesh(Program& program);
 		Mesh* next;
 
-	private:
+	//private:
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
 		std::vector<Texture> textures;
@@ -57,12 +57,12 @@ namespace OpenGLBase
 	{
 	public:
 		MeshList()
-			:head(nullptr), next(nullptr), childrenRootNode(nullptr), numMeshes(0) {};
+			:head(nullptr), nextList(nullptr), children(nullptr), numMeshes(0), numChildren(0) {};
 		void add(Mesh newMesh);
-		MeshList* next;
-		MeshList* childrenRootNode;
+		MeshList* nextList;
+		MeshList** children;
 		int numMeshes;
-
+		int numChildren;
 		Mesh* head;
 	};
 
@@ -70,15 +70,15 @@ namespace OpenGLBase
 	{
 	public:
 		Scene()
-			:rootStart(nullptr), numMeshes(0) {};
+			:rootStart(nullptr), numTotalMeshes(0) {};
 		void source(std::string path, bool flipTexture);
 		void drawScene(Program& program);
 
 	private:
-		void drawChilds(Program& program, MeshList* cur);
-		void processNode(aiNode* node, const aiScene* scene, MeshList* cur);
+		void drawChilds(Program& program, MeshList**& cur);
+		void processNode(aiNode* node, const aiScene* scene, MeshList*& cur);
 		Mesh processMesh(aiMesh* mesh, const aiScene* scene);
-		int numMeshes;
+		int numTotalMeshes;
 
 		std::vector<Mesh> meshes;
 		MeshList* rootStart;

@@ -101,8 +101,8 @@ class my_app : public OpenGLApp
 	glm::mat4 view_matrix = glm::mat4(1.0f);
 	glm::mat4 model_matrix = glm::mat4(1.0f);
 
-	glm::vec3 backpackPos = glm::vec3(10.0f, 0.0f, 0.0f);
-	glm::vec3 backpackScale = glm::vec3(0.2f);
+	glm::vec3 backpackPos = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 backpackScale = glm::vec3(1.0f);
 
 	glm::vec3 tvPos = glm::vec3(0.0f, -0.5f, 0.0f);
 	glm::vec3 tvScale = glm::vec3(1.0f);
@@ -246,8 +246,8 @@ public:
 		vaoLight.setAttrib(0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
 		vaoLight.enable(0);
 
-		backpack.source("res/media/backpack/backpack.obj", true);
-		tv.source("res/media/tv/retrotv0319.obj", false);
+		backpack.source("res/media/cube/cube.obj", true);
+		//tv.source("res/media/tv/retrotv0319.obj", false);
 	}
 
 	void render(double currentTime)
@@ -279,7 +279,7 @@ public:
 		view_matrix =
 			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-		programTv.use();
+		/*programTv.use();
 		programTv.setMat4("proj_matrix", proj_matrix);
 		programTv.setMat4("view_matrix", view_matrix);
 		programTv.setVec3("viewPos", cameraPos);
@@ -294,7 +294,7 @@ public:
 			glm::scale(model_matrix, tvScale);
 		programTv.setMat4("model_matrix", model_matrix);
 
-		tv.drawScene(programTv);
+		tv.drawScene(programTv);*/
 
 		programBackpack.use();
 		programBackpack.setMat4("proj_matrix", proj_matrix);

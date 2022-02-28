@@ -26,6 +26,7 @@ namespace OpenGLBase
 
 	void Mesh::drawMesh(Program& program)
 	{
+		std::cout << "HERE" << std::endl;
 		int numDiff = 1;//3 max
 		int numSpec = 1;//3 max
 		for (int i = 0; i < textures.size(); i++)
@@ -51,21 +52,35 @@ namespace OpenGLBase
 
 	void Scene::drawScene(Program& program)
 	{
-		drawChilds(program, rootStart);
-	}
-
-
-	void Scene::drawChilds(Program& program, MeshList* cur)
-	{
-		if (cur == nullptr)
-			return;
-		Mesh* curMesh = cur->head;
+		Mesh*& curMesh = rootStart->head;
 		while (curMesh != nullptr)
 		{
+			std::cout << "YES MESH" << std::endl;
 			curMesh->drawMesh(program);
 			curMesh = curMesh->next;
 		}
-		drawChilds(program, cur->childrenRootNode);
+		drawChilds(program, rootStart->children);
+	}
+
+	void Scene::drawChilds(Program& program, MeshList**& cur)
+	{
+		if (cur == nullptr) {
+			std::cout << "YES" << std::endl;
+			return;
+		}
+
+		while (*cur != nullptr)
+		{
+			Mesh*& curMesh = (*cur)->head;
+			while (curMesh != nullptr)
+			{
+				std::cout << "YES MESH" << std::endl;
+				curMesh->drawMesh(program);
+				curMesh = curMesh->next;
+			}
+			drawChilds(program, (*cur)->children);
+			*cur = (*cur)->nextList;
+		}
 
 	}
 
@@ -84,27 +99,32 @@ namespace OpenGLBase
 		directory = path.substr(0, path.find_last_of('/'));
 
 		processNode(scene->mRootNode, scene, rootStart);
-		std::cout << numMeshes << std::endl;
+		if (*rootStart->children == nullptr)
+			std::cout << "YES NULLCHILD" << std::endl;
+		//std::cout << (*rootStart->children)->numMeshes << std::endl;
 
 	}
 
-	void Scene::processNode(aiNode* node, const aiScene* scene, MeshList* cur)
+	void Scene::processNode(aiNode* node, const aiScene* scene, MeshList*& cur)
 	{
-		if (cur == nullptr)
+		if (node->mNumMeshes > 0 || node->mNumChildren > 0)
 			cur = new MeshList();
 		for (unsigned int i = 0; i < node->mNumMeshes; i++)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 			cur->add(processMesh(mesh, scene));
+			cur->numMeshes++;
 		}
+//Problem Here: Try to reference the head in MyList** children before drawing
+		if (node->mNumChildren > 0)
+			cur->children = new MeshList * ();
 
 		for (unsigned int i = 0; i < node->mNumChildren; i++)
 		{
-			MeshList* curChild = cur->childrenRootNode;
-			if (curChild == nullptr)
-				curChild = new MeshList();
-			processNode(node->mChildren[i], scene, curChild);
-			curChild = curChild->next;
+			*cur->children = new MeshList();
+			processNode(node->mChildren[i], scene, *cur->children);
+			*cur->children = (*cur->children)->nextList;
+			cur->numChildren++;
 		}
 	}
 
@@ -162,7 +182,7 @@ namespace OpenGLBase
 			for (int i = 0; i < specularMaps.size(); i++)
 				textures.push_back(specularMaps[i]);
 		}
-		numMeshes++;
+
 		return Mesh(vertices, indices, textures);
 	}
 
@@ -210,6 +230,7 @@ namespace OpenGLBase
 		if (cur == nullptr)
 		{
 			head = new Mesh(newMesh);
+			numMeshes++;
 			return;
 		}
 		while (cur->next != nullptr)
