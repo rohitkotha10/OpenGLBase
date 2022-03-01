@@ -23,12 +23,12 @@ namespace OpenGLBase
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		this->texSource = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+		this->texSource = stbi_load(path.c_str(), &width, &height, &nrChannels, STBI_rgb_alpha);
 
 		if (!(this->texSource))
 			std::cout << "Fail Texture Load" << std::endl;
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, this->texSource);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->texSource);
 		
 		glGenerateMipmap(GL_TEXTURE_2D);
 		stbi_image_free(this->texSource);

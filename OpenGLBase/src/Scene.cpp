@@ -26,7 +26,6 @@ namespace OpenGLBase
 
 	void Mesh::drawMesh(Program& program)
 	{
-		std::cout << "HERE" << std::endl;
 		int numDiff = 1;//3 max
 		int numSpec = 1;//3 max
 		for (int i = 0; i < textures.size(); i++)
@@ -52,38 +51,17 @@ namespace OpenGLBase
 
 	void Scene::drawScene(Program& program)
 	{
-		Mesh*& curMesh = rootStart->head;
-		while (curMesh != nullptr)
-		{
-			std::cout << "YES MESH" << std::endl;
-			curMesh->drawMesh(program);
-			curMesh = curMesh->next;
-		}
-		drawChilds(program, rootStart->children);
+		drawNodes(program, rootNode);
 	}
 
-	void Scene::drawChilds(Program& program, MeshList**& cur)
+	void Scene::drawNodes(Program& program, MeshNode& cur)
 	{
-		if (cur == nullptr) {
-			std::cout << "YES" << std::endl;
-			return;
-		}
+		for (int i = 0; i < cur.data.size(); i++)
+			cur.data[i].drawMesh(program);
 
-		while (*cur != nullptr)
-		{
-			Mesh*& curMesh = (*cur)->head;
-			while (curMesh != nullptr)
-			{
-				std::cout << "YES MESH" << std::endl;
-				curMesh->drawMesh(program);
-				curMesh = curMesh->next;
-			}
-			drawChilds(program, (*cur)->children);
-			*cur = (*cur)->nextList;
-		}
-
+		for (int i = 0; i < cur.childNodes.size(); i++)
+			drawNodes(program, cur.childNodes[i]);
 	}
-
 
 	void Scene::source(std::string path, bool flipTexture)
 	{
@@ -98,34 +76,23 @@ namespace OpenGLBase
 		}
 		directory = path.substr(0, path.find_last_of('/'));
 
-		processNode(scene->mRootNode, scene, rootStart);
-		if (*rootStart->children == nullptr)
-			std::cout << "YES NULLCHILD" << std::endl;
-		//std::cout << (*rootStart->children)->numMeshes << std::endl;
-
+		processNode(scene->mRootNode, scene, rootNode);
 	}
 
-	void Scene::processNode(aiNode* node, const aiScene* scene, MeshList*& cur)
+	void Scene::processNode(aiNode* node, const aiScene* scene, MeshNode& cur)
 	{
-		if (node->mNumMeshes > 0 || node->mNumChildren > 0)
-			cur = new MeshList();
 		for (unsigned int i = 0; i < node->mNumMeshes; i++)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-			cur->add(processMesh(mesh, scene));
-			cur->numMeshes++;
+			cur.data.push_back(processMesh(mesh, scene));
 		}
-//Problem Here: Try to reference the head in MyList** children before drawing
-		if (node->mNumChildren > 0)
-			cur->children = new MeshList * ();
 
+		cur.childNodes.resize(node->mNumChildren);
 		for (unsigned int i = 0; i < node->mNumChildren; i++)
 		{
-			*cur->children = new MeshList();
-			processNode(node->mChildren[i], scene, *cur->children);
-			*cur->children = (*cur->children)->nextList;
-			cur->numChildren++;
+			processNode(node->mChildren[i], scene, cur.childNodes[i]);
 		}
+
 	}
 
 	Mesh Scene::processMesh(aiMesh* mesh, const aiScene* scene)
@@ -217,25 +184,10 @@ namespace OpenGLBase
 				texture.type = typeName;
 				texture.path = str.C_Str();
 				textures_loaded.push_back(texture);
-				std::cout << filename << std::endl;
 				textures.push_back(texture);
 			}
 		}
 		return textures;
 	}
 
-	void MeshList::add(Mesh newMesh)
-	{
-		Mesh* cur = this->head;
-		if (cur == nullptr)
-		{
-			head = new Mesh(newMesh);
-			numMeshes++;
-			return;
-		}
-		while (cur->next != nullptr)
-			cur = cur->next;
-		cur->next = new Mesh(newMesh);
-		numMeshes++;
-	}
 }
