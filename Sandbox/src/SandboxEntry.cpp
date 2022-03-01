@@ -23,7 +23,7 @@ void  keyboard_callback(GLFWwindow* window, int key, int scancode, int action, i
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-	if (key == GLFW_KEY_LEFT_CONTROL && action == GLFW_PRESS)
+	if (key == GLFW_KEY_P && action == GLFW_PRESS)
 	{
 		if (hideCursor)
 		{
@@ -85,7 +85,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 class my_app : public OpenGLApp
 {
-	Program programTv;
 	Program programBackpack;
 	Program programLight;
 
@@ -94,18 +93,15 @@ class my_app : public OpenGLApp
 	VertexBuffer vertCoord;
 	IndexBuffer vertIndices;
 
-	Scene backpack;
-	Scene tv;
+	Scene object;
 
 	glm::mat4 proj_matrix = glm::mat4(1.0f);
 	glm::mat4 view_matrix = glm::mat4(1.0f);
 	glm::mat4 model_matrix = glm::mat4(1.0f);
 
-	glm::vec3 backpackPos = glm::vec3(10.0f, 0.0f, 0.0f);
-	glm::vec3 backpackScale = glm::vec3(0.2f);
-
-	glm::vec3 tvPos = glm::vec3(0.0f, -0.5f, 0.0f);
-	glm::vec3 tvScale = glm::vec3(1.0f);
+	glm::vec3 objectPos = glm::vec3(0.0f, 0.0f, 0.0f);
+	float objectRotate[3] = { 0.0f, 0.0f, 0.0f };
+	float objectScale = 1.0f;
 
 	glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
 	glm::vec3 lightScale = glm::vec3(0.2f);
@@ -156,12 +152,6 @@ public:
 		fsLight.source("res/shaders/fsLight.shader");
 		fsLight.compile();
 		fsLight.debug();
-
-		programTv.create();
-		programTv.attach(vs);
-		programTv.attach(fs);
-		programTv.link();
-		programTv.debug();
 
 		programBackpack.create();
 		programBackpack.attach(vs);
@@ -246,8 +236,7 @@ public:
 		vaoLight.setAttrib(0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
 		vaoLight.enable(0);
 
-		backpack.source("res/media/backpack/backpack.obj", true);
-		tv.source("res/media/tv/retrotv0319.obj", false);
+		object.source("res/media/backpack/backpack.obj", true);
 	}
 
 	void render(double currentTime)
@@ -279,23 +268,6 @@ public:
 		view_matrix =
 			glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-		programTv.use();
-		programTv.setMat4("proj_matrix", proj_matrix);
-		programTv.setMat4("view_matrix", view_matrix);
-		programTv.setVec3("viewPos", cameraPos);
-		programTv.setVec3("light.position", lightPos);
-		programTv.setFloat("light.ambient", lightAmbient);
-		programTv.setFloat("light.diffuse", lightDiffuse);
-		programTv.setFloat("light.specular", lightSpecular);
-
-		model_matrix =
-			glm::translate(glm::mat4(1.0f), tvPos);
-		model_matrix =
-			glm::scale(model_matrix, tvScale);
-		programTv.setMat4("model_matrix", model_matrix);
-
-		tv.drawScene(programTv);
-
 		programBackpack.use();
 		programBackpack.setMat4("proj_matrix", proj_matrix);
 		programBackpack.setMat4("view_matrix", view_matrix);
@@ -306,12 +278,16 @@ public:
 		programBackpack.setFloat("light.specular", lightSpecular);
 
 		model_matrix =
-			glm::translate(glm::mat4(1.0f), backpackPos);
+			glm::translate(glm::mat4(1.0f), objectPos);
 		model_matrix =
-			glm::scale(model_matrix, backpackScale);
+			glm::scale(model_matrix, glm::vec3(objectScale));
+		model_matrix =
+			glm::rotate(model_matrix, glm::radians(objectRotate[0]), glm::vec3(1.0f, 0.0f, 0.0f)) *
+			glm::rotate(model_matrix, glm::radians(objectRotate[1]), glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(model_matrix, glm::radians(objectRotate[2]), glm::vec3(0.0f, 0.0f, 1.0f));
 		programBackpack.setMat4("model_matrix", model_matrix);
 
-		backpack.drawScene(programBackpack);
+		object.drawScene(programBackpack);
 
 
 
@@ -334,23 +310,31 @@ public:
 
 	void imguiRender(double currentTime)
 	{
+		//ImGui::ShowDemoWindow();
+		//return;
+		
+
 		if (hideCursor)
 			return;
 
-		ImGui::Begin("OpenGLBase");
+
+		ImGuiWindowFlags window_flags = 0;
+		window_flags |= ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoResize;
+		window_flags |= ImGuiWindowFlags_NoCollapse;
+		window_flags |= ImGuiWindowFlags_NoBackground;
+
+		ImGui::Begin("OpenGLBase", 0, window_flags);
+
 		switch (curImguiWindow)
 		{
 		case 0:
 		{
 			if (ImGui::Button("Light Settings"))
 				curImguiWindow = 1;
-			if (ImGui::Button("TV Settings"))
+			if (ImGui::Button("Object Settings"))
 				curImguiWindow = 2;
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-			ImGui::Text("Press Left Ctrl to Enable/Disable Cursor");
-			if (hideCursor)
-				ImGui::Text("Cursor Enabled");
 			ImGui::Text("Press Escape to Exit");
 			break;
 		}
@@ -369,14 +353,12 @@ public:
 
 		case 2:
 		{
-			if (ImGui::Button("Home"))
+			if (ImGui::Button("<-"))
 				curImguiWindow = 0;
 
-			static float colorTest[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-			ImGui::ColorEdit4("Clear Color", colorTest);
-
-			if (ImGui::Button("Print Colors"))
-				std::cout << colorTest[0] << ' ' << colorTest[1] << ' ' << colorTest[2] << ' ' << colorTest[3] << std::endl;
+			ImGui::SliderFloat3("Object Translation", &objectPos.x, -5.0f, 5.0f);
+			ImGui::SliderFloat3("Object Rotation", &objectRotate[0], -360.0f, 360.0f);
+			ImGui::SliderFloat("Object Scale", &objectScale, 0.1f, 3.0f);
 			break;
 		}
 
@@ -398,11 +380,14 @@ public:
 			cameraPos -= cameraSpeed * cameraRight;
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 			cameraPos += cameraSpeed * cameraRight;
+		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+			cameraPos -= cameraSpeed * cameraUp;
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+			cameraPos += cameraSpeed * cameraUp;
 	}
 
 	void shutdown()
 	{
-		programTv.erase();
 		programBackpack.erase();
 		programLight.erase();
 		vaoLight.erase();

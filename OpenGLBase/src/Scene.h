@@ -37,13 +37,11 @@ namespace OpenGLBase
 			:vertices(vert), indices(ind), textures(texs) {
 			setupMesh();
 		};
-		
+
 		void setupMesh();
 		void drawMesh(Program& program);
 
 	private:
-		//Mesh* next;
-		//Mesh** children;
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
 		std::vector<Texture> textures;
@@ -54,18 +52,28 @@ namespace OpenGLBase
 
 	};
 
+	class MeshNode
+	{
+	public:
+
+		std::vector<MeshNode> childNodes;
+		std::vector<Mesh> data;
+
+	};
+
 	class Scene
 	{
 	public:
 		void source(std::string path, bool flipTexture);
 		void drawScene(Program& program);
-		
+
 	private:
-		void processNode(aiNode* node, const aiScene* scene);
+		void processNode(aiNode* node, const aiScene* scene, MeshNode& cur);
 		Mesh processMesh(aiMesh* mesh, const aiScene* scene);
 
-		std::vector<Mesh> meshes;
-		//Mesh* rootMesh;
+		void drawNodes(Program& program, MeshNode& cur);
+
+		MeshNode rootNode;
 		std::vector<Texture> textures_loaded;
 		std::vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 		std::string directory;

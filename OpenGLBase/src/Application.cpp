@@ -43,6 +43,11 @@ namespace OpenGLBase
 		const char* glsl_version = "#version 450";
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
+
+		//ImGuiIO& io = ImGui::GetIO();
+		//io.Fonts->AddFontFromFileTTF("res/fonts/OpenSans-Regular.ttf", 18.0f);
+		//io.FontDefault = io.Fonts->AddFontFromFileTTF("res/fonts/OpenSans-Regular.ttf", 18.0f);
+
 		ImGui::StyleColorsDark();
 		ImGui_ImplGlfw_InitForOpenGL(window, true);
 		ImGui_ImplOpenGL3_Init(glsl_version);

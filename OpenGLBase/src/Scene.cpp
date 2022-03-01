@@ -49,6 +49,20 @@ namespace OpenGLBase
 		vao.unbind();
 	}
 
+	void Scene::drawScene(Program& program)
+	{
+		drawNodes(program, rootNode);
+	}
+
+	void Scene::drawNodes(Program& program, MeshNode& cur)
+	{
+		for (int i = 0; i < cur.data.size(); i++)
+			cur.data[i].drawMesh(program);
+
+		for (int i = 0; i < cur.childNodes.size(); i++)
+			drawNodes(program, cur.childNodes[i]);
+	}
+
 	void Scene::source(std::string path, bool flipTexture)
 	{
 		Assimp::Importer import;
@@ -62,27 +76,23 @@ namespace OpenGLBase
 		}
 		directory = path.substr(0, path.find_last_of('/'));
 
-		processNode(scene->mRootNode, scene);
+		processNode(scene->mRootNode, scene, rootNode);
 	}
 
-	void Scene::drawScene(Program& program)
-	{
-		for (int i = 0; i < meshes.size(); i++)
-			meshes[i].drawMesh(program);
-	}
-
-	void Scene::processNode(aiNode* node, const aiScene* scene)
+	void Scene::processNode(aiNode* node, const aiScene* scene, MeshNode& cur)
 	{
 		for (unsigned int i = 0; i < node->mNumMeshes; i++)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-			meshes.push_back(processMesh(mesh, scene));
+			cur.data.push_back(processMesh(mesh, scene));
 		}
 
+		cur.childNodes.resize(node->mNumChildren);
 		for (unsigned int i = 0; i < node->mNumChildren; i++)
 		{
-			processNode(node->mChildren[i], scene);
+			processNode(node->mChildren[i], scene, cur.childNodes[i]);
 		}
+
 	}
 
 	Mesh Scene::processMesh(aiMesh* mesh, const aiScene* scene)
@@ -128,7 +138,7 @@ namespace OpenGLBase
 		if (mesh->mMaterialIndex >= 0)
 		{
 			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-			std::vector<Texture> diffuseMaps = 
+			std::vector<Texture> diffuseMaps =
 				loadMaterialTextures(material, aiTextureType_DIFFUSE, "diffuse");
 			std::vector<Texture> specularMaps =
 				loadMaterialTextures(material, aiTextureType_SPECULAR, "specular");
@@ -142,7 +152,7 @@ namespace OpenGLBase
 
 		return Mesh(vertices, indices, textures);
 	}
-		
+
 	std::vector<Texture> Scene::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
 	{
 		std::vector<Texture> textures;
@@ -174,10 +184,10 @@ namespace OpenGLBase
 				texture.type = typeName;
 				texture.path = str.C_Str();
 				textures_loaded.push_back(texture);
-				std::cout << filename << std::endl;
 				textures.push_back(texture);
 			}
 		}
 		return textures;
 	}
+
 }
